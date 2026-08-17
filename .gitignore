@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test-fresh-profile/
+*.log
+
+# Large bundled sermon library (>100MB) — exceeds GitHub's file size limit and
+# is proprietary church content, not app source. Stays local only; the build
+# still picks it up from disk (see README.md "Mettre a jour les donnees
+# prechargees").
+app-src/bundled-data/sermons.json

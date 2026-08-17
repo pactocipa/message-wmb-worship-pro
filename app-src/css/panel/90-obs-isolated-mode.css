@@ -1,0 +1,113 @@
+    body.vmix-mode #program-width-handle,
+    body.vmix-mode #program-display-panel,
+    body.vmix-mode #studio-dock,
+    body.vmix-mode #workspace-height-handle {
+      display: none !important;
+    }
+    body.vmix-mode #left-workspace,
+    body.vmix-mode #main,
+    body.vmix-mode #main-workspace,
+    body.vmix-mode #editor-container,
+    body.vmix-mode .app-container,
+    body.vmix-mode #app-body-row,
+    body.vmix-mode #workspace-top {
+      min-width: 0 !important;
+      width: auto !important;
+      max-width: none !important;
+    }
+    body.vmix-mode #main {
+      flex: 1 1 auto !important;
+    }
+    body.vmix-mode #sidebar {
+      min-width: 160px !important;
+      width: 200px !important;
+      max-width: 240px !important;
+    }
+    body.vmix-mode #main {
+      min-width: 0 !important;
+      width: auto !important;
+    }
+    body.vmix-mode #sidebar-width-handle {
+      width: 4px !important;
+    }
+    body.vmix-mode #lyric-editor,
+    body.vmix-mode #lyric-buttons,
+    body.vmix-mode .header-toolbar,
+    body.vmix-mode .nav-row,
+    body.vmix-mode .main-panel-stacks {
+      min-width: 0 !important;
+    }
+    body.vmix-mode .nav-row {
+      flex-wrap: wrap !important;
+    }
+    body.vmix-mode #nav-mirror-search {
+      min-width: 0 !important;
+    }
+    body.vmix-mode .live-controls {
+      position: sticky !important;
+      bottom: 0 !important;
+      z-index: 8 !important;
+      flex-shrink: 0 !important;
+    }
+    body.obs-isolated #activity-bar .ab-btn:not(#ab-sidebar-toggle):not(#ab-song):not(#ab-bible):not(#ab-schedule):not(#ab-settings) {
+      display: none !important;
+    }
+    body.obs-browser-safe-mode #btn-output-go-live-panel,
+    body.obs-browser-safe-mode #btn-output-end-live,
+    body.obs-browser-safe-mode #btn-open-standalone-output,
+    body.obs-browser-safe-mode #output-popover,
+    body.obs-browser-safe-mode #studio-dock,
+    body.obs-browser-safe-mode #pgm-stream-settings-overlay {
+      display: none !important;
+    }
+    body.obs-isolated #activity-bar .ab-spacer {
+      margin-top: auto;
+    }
+    body.obs-isolated .page-nav-btn[data-page] {
+      display: none !important;
+    }
+    body.obs-isolated .app-container {
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+    }
+    body.obs-isolated #app-body-row {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    /* Keep control panel layout pinned and visible in OBS dock mode */
+    body.obs-isolated #studio-dock,
+    body.obs-isolated #workspace-height-handle,
+    body.obs-isolated #program-width-handle,
+    body.obs-isolated #program-display-panel {
+      display: none !important;
+    }
+    body.obs-isolated #workspace-top,
+    body.obs-isolated #left-workspace,
+    body.obs-isolated #main {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    body.obs-isolated #left-workspace {
+      width: auto !important;
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+    }
+    body.obs-isolated #main {
+      width: auto !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+      flex-basis: auto !important;
+    }
+    body.obs-isolated #main-workspace,
+    body.obs-isolated #editor-container {
+      min-height: 0 !important;
+      flex: 1 1 auto !important;
+    }
+    body.obs-isolated .live-controls {
+      position: sticky !important;
+      bottom: 0 !important;
+      z-index: 8 !important;
+      flex-shrink: 0 !important;
+    }

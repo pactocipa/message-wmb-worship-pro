@@ -1,0 +1,180 @@
+          .annotate-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+          }
+          .bible-tool-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+          }
+          .bible-tool-panel {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 320px;
+            background: linear-gradient(135deg, var(--bg-panel), color-mix(in srgb, var(--bg-panel) 72%, #000 28%));
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 9300;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+            color: var(--text);
+          }
+          .bible-tool-panel.open {
+            display: flex;
+          }
+          .bible-tool-panel::before {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: -6px;
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--bg-panel), color-mix(in srgb, var(--bg-panel) 72%, #000 28%));
+            transform: rotate(45deg);
+            border-left: 1px solid var(--border);
+            border-top: 1px solid var(--border);
+          }
+          #annotate-toolbar {
+            position: fixed;
+            z-index: 9301;
+            top: 0;
+            left: 0;
+            transform: none;
+            background: linear-gradient(135deg, var(--bg-panel), color-mix(in srgb, var(--bg-panel) 72%, #000 28%));
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 3px 10px;
+            min-height: 30px;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            gap: 8px;
+            min-width: 340px;
+            justify-content: center;
+            display: none;
+            flex-wrap: wrap;
+          }
+          .workspace-state-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 22px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(91, 141, 239, 0.16);
+            border: 1px solid rgba(91, 141, 239, 0.34);
+            color: #dbe8ff;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+          }
+          .annotate-swatch,
+          .annotate-color-picker {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            border: 2px solid #fff;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            transition: border 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #1b1f25;
+          }
+          .annotate-swatch.selected {
+            border: 2px solid var(--accent, #0ea5e9);
+            box-shadow: 0 2px 8px rgba(14,165,233,0.18);
+          }
+          .annotate-placeholder {
+            border-style: dashed;
+            border-color: rgba(255,255,255,0.4);
+            background: transparent;
+          }
+          .annotate-color-picker {
+            border-color: rgba(255,255,255,0.6);
+          }
+          .annotate-color-picker .picker-ring {
+            position: absolute;
+            inset: 2px;
+            border-radius: 4px;
+            background: conic-gradient(#ff0040, #ff8c00, #ffe600, #9aff00, #00e5ff, #3b82f6, #8b5cf6, #ff0040);
+            opacity: 0.95;
+            pointer-events: none;
+          }
+          .annotate-color-picker .picker-fill {
+            position: absolute;
+            inset: 5px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.35);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+            pointer-events: none;
+          }
+          .annotate-color-picker.ready {
+            border-color: var(--accent, #0ea5e9);
+          }
+          .annotate-color-picker.dragging {
+            opacity: 0.6;
+          }
+          #annotate-color-input {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 2;
+          }
+          .annotate-hex-input {
+            width: 76px;
+            height: 24px;
+            font-size: 11px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--panel-content-bg);
+            color: var(--text);
+            padding: 0 6px;
+            font-family: inherit;
+            outline: none;
+          }
+          .annotate-hex-input::placeholder {
+            color: var(--text-secondary);
+          }
+          .annotate-clear-btn {
+            height: 24px;
+            width: 32px;
+            font-size: 12px;
+            padding: 0 6px;
+            border-radius: 5px;
+            margin-left: 0;
+            border: 1px solid var(--border);
+            background: color-mix(in srgb, var(--bg-panel) 72%, #000 28%);
+            color: var(--text);
+            line-height: 1;
+          }
+          #annotate-clear-current.annotate-clear-btn {
+            margin-left: 10px;
+          }
+          .annotate-clear-btn:hover {
+            filter: brightness(1.08);
+          }
+          .annotate-hex-input:focus {
+            border-color: var(--accent, #0ea5e9);
+            box-shadow: 0 0 0 2px rgba(14,165,233,0.2);
+          }
+          body.annotate-active {
+            cursor: crosshair;
+          }
+          body.annotate-active #lyric-buttons .lyric-btn {
+            user-select: text;
+            -webkit-user-select: text;
+          }

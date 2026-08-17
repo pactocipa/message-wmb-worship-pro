@@ -1,0 +1,55 @@
+{
+  "name": "bsp-desktop",
+  "version": "2.1.0",
+  "description": "Desktop shell (Electron) for Bible Song Pro — projection window management, with NDI output planned as a later phase.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "allowScripts": {
+    "electron@32.3.3": true
+  },
+  "build": {
+    "appId": "com.biblesongpro.desktop",
+    "productName": "Bible Song Pro Desktop",
+    "asar": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "relay-server.js",
+      "app-src/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "pactocipa",
+        "repo": "message-wmb-worship-pro"
+      }
+    ]
+  }
+}

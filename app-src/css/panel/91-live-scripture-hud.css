@@ -1,0 +1,295 @@
+    /* ── HUD container ── */
+    #live-scripture-hud {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      width: min(200px, calc(100vw - 16px));
+      height: min(420px, calc(100vh - 20px));
+      z-index: 8500;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: var(--bg-panel, #1b1f2a);
+      color: var(--text, #f5f5f7);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+    #live-scripture-hud.hud-hidden { display: none !important; }
+
+    /* ── Titlebar ── */
+    .ls-hud-titlebar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 7px;
+      border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 84%, #000 16%);
+      cursor: grab;
+      flex-shrink: 0;
+    }
+    .ls-hud-titlebar:active { cursor: grabbing; }
+	    .ls-hud-title-row {
+	      display: flex;
+	      align-items: center;
+	      justify-content: space-between;
+	      width: 100%;
+	    }
+	    .ls-hud-title-left {
+	      display: flex;
+	      align-items: center;
+	      gap: 6px;
+	      min-width: 0;
+	    }
+    .ls-hud-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+    .ls-hud-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text, #f5f5f7);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+	    .ls-hud-title::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent, #0a84ff);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #0a84ff) 60%, transparent 40%);
+	      flex-shrink: 0;
+	    }
+	    .ls-hud-mode-toggle {
+	      height: 18px;
+	      min-width: 34px;
+	      padding: 0 6px;
+	      border-radius: 0;
+	      border: 1px solid color-mix(in srgb, var(--accent, #0a84ff) 45%, var(--border, rgba(255,255,255,0.12)) 55%);
+	      background: color-mix(in srgb, var(--accent, #0a84ff) 18%, var(--bg-panel, #1b1f2a) 82%);
+	      color: var(--text, #f5f5f7);
+	      font-size: 9px;
+	      font-weight: 800;
+	      line-height: 1;
+	      cursor: pointer;
+	      text-transform: uppercase;
+	      pointer-events: auto;
+	      transition: background 0.12s, border-color 0.12s, color 0.12s;
+	    }
+	    .ls-hud-mode-toggle:hover {
+	      background: color-mix(in srgb, var(--accent, #0a84ff) 28%, var(--bg-panel, #1b1f2a) 72%);
+	      border-color: color-mix(in srgb, var(--accent, #0a84ff) 62%, var(--border, rgba(255,255,255,0.12)) 38%);
+	    }
+	    .ls-hud-mode-toggle.is-song {
+	      border-color: color-mix(in srgb, #34c759 48%, var(--border, rgba(255,255,255,0.12)) 52%);
+	      background: color-mix(in srgb, #34c759 18%, var(--bg-panel, #1b1f2a) 82%);
+	    }
+	    .ls-hud-mode-toggle.is-song:hover {
+	      background: color-mix(in srgb, #34c759 28%, var(--bg-panel, #1b1f2a) 72%);
+	      border-color: color-mix(in srgb, #34c759 64%, var(--border, rgba(255,255,255,0.12)) 36%);
+	    }
+    .ls-hud-btn {
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 88%, #fff 12%);
+      color: var(--text-secondary, #86868b);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      pointer-events: auto;
+    }
+    .ls-hud-btn:hover {
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 80%, #fff 20%);
+      border-color: var(--border-elevated, var(--border, rgba(255,255,255,0.18)));
+      color: var(--text, #f5f5f7);
+    }
+    .ls-hud-close {
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: transparent;
+      color: var(--text-secondary, #86868b);
+      font-size: 11px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s, color 0.12s;
+      pointer-events: auto;
+    }
+    .ls-hud-close:hover {
+      background: rgba(220,53,69,0.22);
+      border-color: rgba(220,53,69,0.45);
+      color: #fca5a5;
+    }
+
+    /* ── Config panel ── */
+    .ls-hud-config {
+      padding: 8px;
+      border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 86%, #000 14%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+	    .ls-hud-config-hidden { display: none !important; }
+	    .ls-hud-config-row-hidden { display: none !important; }
+    .ls-hud-checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 0 8px;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 90%, #fff 10%);
+      color: var(--text-secondary, #86868b);
+      font-size: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ls-hud-checkline:hover {
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 84%, #fff 16%);
+      border-color: var(--border-elevated, var(--border, rgba(255,255,255,0.18)));
+      color: var(--text, #f5f5f7);
+    }
+    .ls-hud-checkline input[type="checkbox"] {
+      margin: 0;
+      flex-shrink: 0;
+      accent-color: #3a7bdb;
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    /* ── Body ── */
+    .ls-hud-body {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: auto;
+      user-select: text;
+    }
+
+    /* ── Two-column transcript / detected split ── */
+    .ls-hud-split {
+      display: block;
+      width: 100%;
+    }
+    .ls-hud-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+    .ls-hud-block-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text, #f5f5f7);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ls-hud-block-note {
+      display: none;
+    }
+
+    /* ── Compact transcript bar in title row ── */
+    .ls-hud-transcript-inline {
+      flex: 1;
+      min-width: 72px;
+      height: 22px;
+      padding: 1px 8px;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 90%, #fff 10%);
+      color: var(--text, #f5f5f7);
+      font-size: 10px;
+      line-height: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+    }
+    .ls-hud-transcript-inline::selection { background: color-mix(in srgb, var(--accent, #0a84ff) 35%, transparent 65%); }
+    .ls-hud-transcript-inline:empty::before {
+      content: attr(data-placeholder);
+      color: #4a5c74;
+    }
+
+    /* ── Detected verses grid ── */
+    .ls-hud-detected-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 560px) {
+      .ls-hud-detected-grid { grid-template-columns: 1fr; }
+    }
+    .ls-hud-verse-list {
+      min-height: 84px;
+      padding: 6px;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 90%, #fff 10%);
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+    }
+    .ls-hud-verse-list.best-hit {
+      border-color: color-mix(in srgb, var(--accent, #0a84ff) 45%, var(--border, rgba(255,255,255,0.12)) 55%);
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 82%, var(--accent, #0a84ff) 18%);
+    }
+    .ls-hud-verse-item {
+      padding: 6px;
+      border-radius: 0;
+      border: 1px solid var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--bg-panel, #1b1f2a) 86%, #fff 14%);
+      color: var(--text, #f5f5f7);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    .ls-hud-verse-item.placeholder { color: var(--text-secondary, #86868b); }
+    .ls-hud-verse-item--clickable {
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .ls-hud-verse-item--clickable:hover {
+      background: color-mix(in srgb, var(--accent, #0a84ff) 18%, var(--bg-panel, #1b1f2a) 82%);
+      border-color: color-mix(in srgb, var(--accent, #0a84ff) 50%, var(--border, rgba(255,255,255,0.12)) 50%);
+    }
+    .ls-hud-verse-item--clickable:active {
+      background: color-mix(in srgb, var(--accent, #0a84ff) 30%, var(--bg-panel, #1b1f2a) 70%);
+    }
+
+    /* ── Active state for toolbar button ── */
+    #btn-ai-panel.hud-open {
+      border-color: rgba(58,123,219,0.55);
+      color: #86b8f8;
+      background: rgba(58,123,219,0.15);
+    }
