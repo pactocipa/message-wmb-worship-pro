@@ -126,6 +126,10 @@
       const state = hasActiveLiveState
         ? { kind: 'update', payload: { ...lastLiveState.payload, sceneLayers } }
         : { kind: 'clear', sceneLayers };
+      // Idle screen is independent of live/clear (see pushIdleBackgroundUpdate)
+      // but is included in every full-state replay too, so a display window
+      // that reloads before anything has ever gone live still picks it up.
+      state.idleBg = { enabled: !!idleScreenEnabled, image: idleScreenImageDataUrl || null };
       const msg = {
         type: 'SYNC_STATE',
         proto: 1,
@@ -141,6 +145,23 @@
         }
       } catch (_) {}
     }
+
+    // Pushed immediately whenever the idle-screen setting changes, and right
+    // after the output window opens — doesn't wait for the next HELLO/PING
+    // round-trip. Deliberately NOT seq-gated like content updates: it has no
+    // ordering relationship with song/verse pushes, it just needs to reach
+    // the display whenever it changes.
+    function pushIdleBackgroundUpdate() {
+      broadcastMessage({
+        type: 'IDLE_BG',
+        proto: 1,
+        sender: 'control',
+        ts: Date.now(),
+        enabled: !!idleScreenEnabled,
+        image: idleScreenImageDataUrl || null
+      });
+    }
+    window.pushIdleBackgroundUpdate = pushIdleBackgroundUpdate;
 
     function replayDisplaySyncState(reason = 'display-sync') {
       if (!stateReady) {

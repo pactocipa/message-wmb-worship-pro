@@ -183,6 +183,52 @@
       showToast('Background uploaded');
     }
 
+    function updateIdleScreenUi() {
+      const onBtn = document.getElementById('idle-screen-on');
+      const offBtn = document.getElementById('idle-screen-off');
+      const imageRow = document.getElementById('idle-screen-image-row');
+      const hint = document.getElementById('idle-screen-hint');
+      if (onBtn) onBtn.classList.toggle('active', idleScreenEnabled);
+      if (offBtn) offBtn.classList.toggle('active', !idleScreenEnabled);
+      if (imageRow) imageRow.style.display = idleScreenEnabled ? 'block' : 'none';
+      if (hint) hint.innerText = idleScreenImageDataUrl ? 'Image sélectionnée ✓' : 'Aucune image sélectionnée';
+    }
+
+    function setIdleScreenEnabled(enabled) {
+      idleScreenEnabled = !!enabled;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+    }
+
+    async function pickIdleScreenImage() {
+      if (!hasDesktopMediaPicker()) {
+        showToast('Sélecteur de fichier natif indisponible.');
+        return;
+      }
+      let result;
+      try {
+        result = await window.BSPDesktop.pickMediaFile({ kind: 'image' });
+      } catch (e) {
+        console.error('pickMediaFile(idle image) failed', e);
+        showToast('Échec de l\'ouverture du sélecteur de fichier.');
+        return;
+      }
+      if (!result || !result.url) return; // user cancelled
+      idleScreenImageDataUrl = result.url;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+      showToast('Image d\'accueil mise à jour');
+    }
+
+    function clearIdleScreenImage() {
+      idleScreenImageDataUrl = null;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+    }
+
     async function pickBgVideo() {
       if (!hasDesktopMediaPicker()) {
         const input = document.getElementById('bg-video-upload');

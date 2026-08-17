@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="css/shared/overlay-banners.css">
 </head>
 <body>
+  <div id="idle-bg-layer"></div>
   <div id="bg-layer" class="hardware-accelerated">
     <video id="bg-video" class="bg-video" muted playsinline loop></video>
     <div id="bg-youtube" class="bg-youtube">
@@ -542,6 +543,19 @@
       }, 500);
     }
 
+    function setIdleBackground(d) {
+      const layer = document.getElementById('idle-bg-layer');
+      if (!layer) return;
+      const enabled = !!(d && d.enabled);
+      const image = d && d.image ? String(d.image) : null;
+      if (enabled && image) {
+        layer.style.backgroundImage = `url(${image})`;
+        layer.style.opacity = '1';
+      } else {
+        layer.style.opacity = '0';
+      }
+    }
+
     function handleInboundMessage(d, source) {
       debug(`MSG(${source}): ` + (d.type || 'unknown') + (d.text ? ' — ' + (String(d.text).slice(0,80)) : ''));
       try {
@@ -569,6 +583,11 @@
             const payload = state.payload || null;
             const seq = payload && payload.seq ? payload.seq : d.seq;
             hasSynced = true;
+            // Independent of the live/clear seq gate below — a full-state
+            // replay (e.g. after this window reloads) should always bring
+            // the idle screen setting back in sync even if the content seq
+            // itself gets rejected as stale/duplicate.
+            if (state.idleBg) setIdleBackground(state.idleBg);
             if (!acceptSeq(seq)) return;
             if (state.kind === 'clear') {
               clearDisplay();
@@ -585,6 +604,11 @@
             break;
           case 'OVERLAY_HIDE':
             hideOverlayBanner();
+            break;
+          // Idle screen setting changed live — also independent of content
+          // seq gating, same reasoning as above.
+          case 'IDLE_BG':
+            setIdleBackground(d);
             break;
         }
       } catch (err) {

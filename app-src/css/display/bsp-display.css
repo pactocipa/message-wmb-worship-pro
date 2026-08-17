@@ -28,6 +28,25 @@
       font-family: 'Montserrat', sans-serif;
     }
 
+    /* Idle screen: sits one layer below #bg-layer so normal backgrounds
+       (which go opaque once real content is live) simply paint over it.
+       Only visible when #bg-layer is transparent — i.e. before anything has
+       gone live, or after an explicit clear. */
+    #idle-bg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -4;
+      background-color: black;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     #bg-layer {
       position: absolute;
       top: 0;

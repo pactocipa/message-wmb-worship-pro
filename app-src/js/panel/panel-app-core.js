@@ -369,6 +369,12 @@
     let overlayLiveActive = false;
     let activeOverlayCardId = null;
     let editingOverlayCardId = null;
+    // Idle screen: an image shown on the projection window as soon as it
+    // opens, in place of a plain black screen, until the first song/verse is
+    // actually sent live. Global (not per Bible/Songs/Setlist profile) since
+    // it's about the state before any content has been chosen at all.
+    let idleScreenEnabled = false;
+    let idleScreenImageDataUrl = null;
     let presetPopoverOpen = false;
     let outputPopoverOpen = false;
     let footerBibleVersionPopoverOpen = false;

@@ -115,6 +115,8 @@
         overlayCards: Array.isArray(overlayCards) ? overlayCards : [],
         overlayChurchLogoDataUrl: overlayChurchLogoDataUrl || null,
         overlayChurchName: overlayChurchName || '',
+        idleScreenEnabled: !!idleScreenEnabled,
+        idleScreenImageDataUrl: idleScreenImageDataUrl || null,
         scenes: _serializeScenes(),
         activeSceneId: _activeSceneId,
         sceneIdCounter: _sceneIdCounter,
@@ -4506,6 +4508,9 @@
       overlayCards = Array.isArray(appState.overlayCards) ? appState.overlayCards : [];
       overlayChurchLogoDataUrl = appState.overlayChurchLogoDataUrl || null;
       overlayChurchName = appState.overlayChurchName || '';
+      idleScreenEnabled = !!appState.idleScreenEnabled;
+      idleScreenImageDataUrl = appState.idleScreenImageDataUrl || null;
+      if (typeof updateIdleScreenUi === 'function') updateIdleScreenUi();
       restoreSearchQueriesFromState(appState);
 
       sidebarTab = appState.activeTab || sidebarTab || 'bible';
