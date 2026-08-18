@@ -117,6 +117,7 @@
 
     function nextSeq() {
       messageSeq += 1;
+      try { localStorage.setItem('bsp-message-seq', String(messageSeq)); } catch (_) {}
       return messageSeq;
     }
 
@@ -129,7 +130,11 @@
       // Idle screen is independent of live/clear (see pushIdleBackgroundUpdate)
       // but is included in every full-state replay too, so a display window
       // that reloads before anything has ever gone live still picks it up.
-      state.idleBg = { enabled: !!idleScreenEnabled, image: idleScreenImageDataUrl || null };
+      state.idleBg = {
+        enabled: !!idleScreenEnabled,
+        image: (idleScreenType !== 'video' && idleScreenImageDataUrl) ? idleScreenImageDataUrl : null,
+        video: (idleScreenType === 'video' && idleScreenVideoDataUrl) ? idleScreenVideoDataUrl : null
+      };
       const msg = {
         type: 'SYNC_STATE',
         proto: 1,
@@ -158,7 +163,8 @@
         sender: 'control',
         ts: Date.now(),
         enabled: !!idleScreenEnabled,
-        image: idleScreenImageDataUrl || null
+        image: (idleScreenType !== 'video' && idleScreenImageDataUrl) ? idleScreenImageDataUrl : null,
+        video: (idleScreenType === 'video' && idleScreenVideoDataUrl) ? idleScreenVideoDataUrl : null
       });
     }
     window.pushIdleBackgroundUpdate = pushIdleBackgroundUpdate;

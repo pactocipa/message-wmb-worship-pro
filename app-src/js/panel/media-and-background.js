@@ -188,14 +188,32 @@
       const offBtn = document.getElementById('idle-screen-off');
       const imageRow = document.getElementById('idle-screen-image-row');
       const hint = document.getElementById('idle-screen-hint');
+      const videoHint = document.getElementById('idle-screen-video-hint');
+      const typeImageBtn = document.getElementById('idle-screen-type-image');
+      const typeVideoBtn = document.getElementById('idle-screen-type-video');
+      const imagePickerRow = document.getElementById('idle-screen-image-picker-row');
+      const videoPickerRow = document.getElementById('idle-screen-video-picker-row');
       if (onBtn) onBtn.classList.toggle('active', idleScreenEnabled);
       if (offBtn) offBtn.classList.toggle('active', !idleScreenEnabled);
       if (imageRow) imageRow.style.display = idleScreenEnabled ? 'block' : 'none';
+      const isVideo = idleScreenType === 'video';
+      if (typeImageBtn) typeImageBtn.classList.toggle('active', !isVideo);
+      if (typeVideoBtn) typeVideoBtn.classList.toggle('active', isVideo);
+      if (imagePickerRow) imagePickerRow.style.display = isVideo ? 'none' : 'block';
+      if (videoPickerRow) videoPickerRow.style.display = isVideo ? 'block' : 'none';
       if (hint) hint.innerText = idleScreenImageDataUrl ? 'Image sélectionnée ✓' : 'Aucune image sélectionnée';
+      if (videoHint) videoHint.innerText = idleScreenVideoDataUrl ? 'Vidéo sélectionnée ✓' : 'Aucune vidéo sélectionnée';
     }
 
     function setIdleScreenEnabled(enabled) {
       idleScreenEnabled = !!enabled;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+    }
+
+    function setIdleScreenType(type) {
+      idleScreenType = type === 'video' ? 'video' : 'image';
       updateIdleScreenUi();
       saveToStorageDebounced();
       if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
@@ -224,6 +242,34 @@
 
     function clearIdleScreenImage() {
       idleScreenImageDataUrl = null;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+    }
+
+    async function pickIdleScreenVideo() {
+      if (!hasDesktopMediaPicker()) {
+        showToast('Sélecteur de fichier natif indisponible.');
+        return;
+      }
+      let result;
+      try {
+        result = await window.BSPDesktop.pickMediaFile({ kind: 'video' });
+      } catch (e) {
+        console.error('pickMediaFile(idle video) failed', e);
+        showToast('Échec de l\'ouverture du sélecteur de fichier.');
+        return;
+      }
+      if (!result || !result.url) return; // user cancelled
+      idleScreenVideoDataUrl = result.url;
+      updateIdleScreenUi();
+      saveToStorageDebounced();
+      if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();
+      showToast('Vidéo d\'accueil mise à jour');
+    }
+
+    function clearIdleScreenVideo() {
+      idleScreenVideoDataUrl = null;
       updateIdleScreenUi();
       saveToStorageDebounced();
       if (typeof pushIdleBackgroundUpdate === 'function') pushIdleBackgroundUpdate();

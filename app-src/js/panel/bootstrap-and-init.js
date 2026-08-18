@@ -112,11 +112,10 @@
         },
         schedule: Array.isArray(schedule) ? schedule : [],
         presets: Array.isArray(presets) ? presets : [],
-        overlayCards: Array.isArray(overlayCards) ? overlayCards : [],
-        overlayChurchLogoDataUrl: overlayChurchLogoDataUrl || null,
-        overlayChurchName: overlayChurchName || '',
         idleScreenEnabled: !!idleScreenEnabled,
+        idleScreenType: idleScreenType === 'video' ? 'video' : 'image',
         idleScreenImageDataUrl: idleScreenImageDataUrl || null,
+        idleScreenVideoDataUrl: idleScreenVideoDataUrl || null,
         scenes: _serializeScenes(),
         activeSceneId: _activeSceneId,
         sceneIdCounter: _sceneIdCounter,
@@ -4505,11 +4504,10 @@
         }
       });
       presets = Array.isArray(appState.presets) ? appState.presets : [];
-      overlayCards = Array.isArray(appState.overlayCards) ? appState.overlayCards : [];
-      overlayChurchLogoDataUrl = appState.overlayChurchLogoDataUrl || null;
-      overlayChurchName = appState.overlayChurchName || '';
       idleScreenEnabled = !!appState.idleScreenEnabled;
+      idleScreenType = appState.idleScreenType === 'video' ? 'video' : 'image';
       idleScreenImageDataUrl = appState.idleScreenImageDataUrl || null;
+      idleScreenVideoDataUrl = appState.idleScreenVideoDataUrl || null;
       if (typeof updateIdleScreenUi === 'function') updateIdleScreenUi();
       restoreSearchQueriesFromState(appState);
 

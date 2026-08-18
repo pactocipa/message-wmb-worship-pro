@@ -174,7 +174,22 @@
     let stateReady = false;
     let isRestoringBackup = false;
     let hasInitialized = false;
-    let messageSeq = 0;
+    // Persisted (not just per-process) so it never regresses across an app
+    // restart. The display's IndexedDB mirror (see mirrorSyncMessage) keeps
+    // the last seq it saw across restarts too, on its own side, precisely
+    // so a reloaded/crashed projection window can recover the last live
+    // state — but that means a panel restarting with seq back at 0 would
+    // have every real-time message silently rejected as "stale" by the
+    // display until the counter organically climbed back past that old
+    // high-water mark, breaking projection until then.
+    let messageSeq = (function () {
+      try {
+        const stored = parseInt(localStorage.getItem('bsp-message-seq') || '0', 10);
+        return Number.isFinite(stored) ? stored : 0;
+      } catch (_) {
+        return 0;
+      }
+    })();
     let lastLiveState = { kind: 'clear' };
     let editorMode = 'btn';
     let sidebarLayoutMode = 'layout2';
@@ -355,26 +370,14 @@
     let editingStyleId = null;
     let customFonts = [];
     let presets = [];
-    // Preacher/sermon title-card overlays (church logo + series + theme +
-    // speaker photo, shown as a broadcast-style banner OVER whatever else is
-    // currently projected). Deliberately kept out of the sidebarTab/
-    // selectItem/getButtonContextList machinery used by Bible/Songs/Setlist —
-    // an overlay toggles on top of the live content rather than replacing
-    // it, so it doesn't fit that "select an item, it becomes THE live
-    // content" model at all; giving it its own small, self-contained state
-    // avoids touching that deeply-coupled system.
-    let overlayCards = [];
-    let overlayChurchLogoDataUrl = null;
-    let overlayChurchName = '';
-    let overlayLiveActive = false;
-    let activeOverlayCardId = null;
-    let editingOverlayCardId = null;
     // Idle screen: an image shown on the projection window as soon as it
     // opens, in place of a plain black screen, until the first song/verse is
     // actually sent live. Global (not per Bible/Songs/Setlist profile) since
     // it's about the state before any content has been chosen at all.
     let idleScreenEnabled = false;
+    let idleScreenType = 'image'; // 'image' | 'video'
     let idleScreenImageDataUrl = null;
+    let idleScreenVideoDataUrl = null;
     let presetPopoverOpen = false;
     let outputPopoverOpen = false;
     let footerBibleVersionPopoverOpen = false;

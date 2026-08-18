@@ -23,10 +23,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
   </noscript>
   <link rel="stylesheet" href="css/display/bsp-display.css">
-  <link rel="stylesheet" href="css/shared/overlay-banners.css">
 </head>
 <body>
-  <div id="idle-bg-layer"></div>
+  <div id="idle-bg-layer">
+    <video id="idle-bg-video" class="bg-video" muted playsinline loop></video>
+  </div>
   <div id="bg-layer" class="hardware-accelerated">
     <video id="bg-video" class="bg-video" muted playsinline loop></video>
     <div id="bg-youtube" class="bg-youtube">
@@ -49,11 +50,6 @@
   <div id="display-container" class="mode-full">
     <div id="text-container" class="hardware-accelerated"></div>
   </div>
-
-  <!-- Preacher/sermon title-card overlay — always on top of whatever else is
-       currently projected, shown/hidden independently via OVERLAY_SHOW /
-       OVERLAY_HIDE messages (see handleInboundMessage below). -->
-  <div id="overlay-banner-layer" class="ov-banner-layer"></div>
 
   <div id="debug-overlay" style="position: fixed; right: 12px; top: 12px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px; border-radius: 8px; z-index: 9999; font-family: monospace; font-size: 12px; max-width: 440px; max-height: 60vh; overflow:auto; display: none;">
     <div id="debug-status" style="font-weight:bold;margin-bottom:6px">DEBUG: initializing...</div>
@@ -172,6 +168,7 @@
     let rafId = null;
     let lastUpdateTime = 0;
     let lastSeq = 0;
+    let lastAcceptedTs = 0;
     let lastLtBgMode = 'solid';
     let lastBGMode = 'solid';
     let lastBgType = 'color';
@@ -233,14 +230,10 @@
       videoEl.addEventListener('loadeddata', () => {
         videoEl.style.visibility = '';
       });
-      // Hard "never stop" guarantee: the seamless cross-fade loop (see
-      // getSeamlessLoopController/startSeamlessLoopMonitor) disables the
-      // native loop attribute on these elements in favor of its own
-      // near-the-end swap — but that swap depends on a requestAnimationFrame
-      // monitor that can miss its window (e.g. video duration briefly
-      // unavailable, a dropped frame right at the boundary). If the element
-      // ever actually reaches 'ended' regardless, restart it immediately
-      // rather than leaving the projection frozen on the last frame.
+      // Hard "never stop" guarantee: native looping (videoEl.loop, set in
+      // syncVideoState) normally suppresses 'ended' entirely, but if it
+      // ever fires anyway, restart immediately rather than leaving the
+      // projection frozen on the last frame.
       videoEl.addEventListener('ended', () => {
         if (videoEl.dataset.bspWantsLoop !== '1') return;
         try {
@@ -252,6 +245,7 @@
     }
     attachVideoErrorFallback(elements.bgVideo);
     attachVideoErrorFallback(elements.ltVideo);
+    attachVideoErrorFallback(document.getElementById('idle-bg-video'));
 
     // Simple on-screen debug logger (temporary)
     function debug(msg, isError = false) {
@@ -383,11 +377,27 @@
     }
     
     // Handle incoming messages
-    function acceptSeq(seq) {
+    function acceptSeq(seq, ts) {
       if (!seq) return true;
-      if (seq <= lastSeq) return false;
-      lastSeq = seq;
-      return true;
+      if (seq > lastSeq) {
+        lastSeq = seq;
+        if (ts) lastAcceptedTs = Number(ts) || lastAcceptedTs;
+        return true;
+      }
+      // Seq looks stale/duplicate — but different sync transports (real-time
+      // BroadcastChannel/IPC vs. the IndexedDB mirror fallback, or a panel
+      // that restarted and reset its own counter) can end up numbering
+      // messages out of step with each other. If this message is clearly
+      // newer in wall-clock time than the last one actually applied, let it
+      // through anyway rather than leaving the projection stuck forever on
+      // a seq comparison that no longer means what it used to.
+      const tsNum = Number(ts) || 0;
+      if (tsNum && lastAcceptedTs && tsNum > lastAcceptedTs + 500) {
+        lastSeq = seq;
+        lastAcceptedTs = tsNum;
+        return true;
+      }
+      return false;
     }
 
     function applyUpdateWithThrottle(data) {
@@ -522,48 +532,44 @@
       };
     }
 
-    let overlayHideTimer = null;
+    // The idle screen (image or video) must only ever be visible when
+    // nothing is actually being projected — never blended with or bleeding
+    // through behind live content. It used to rely purely on #bg-layer
+    // sitting visually on top and going opaque once content is live, but
+    // that breaks whenever the content's own background is disabled/
+    // transparent (Background: Off) — the idle layer would show through
+    // behind live text. contentIsLive is set explicitly by handleUpdate()/
+    // finalizeClear() so the two are never both visible at once.
+    let lastIdleConfig = { enabled: false, image: null, video: null };
+    let contentIsLive = false;
 
-    function showOverlayBanner(d) {
-      const layer = document.getElementById('overlay-banner-layer');
-      if (!layer || !d || !d.html) return;
-      if (overlayHideTimer) { clearTimeout(overlayHideTimer); overlayHideTimer = null; }
-      layer.innerHTML = d.html;
-    }
-
-    function hideOverlayBanner() {
-      const layer = document.getElementById('overlay-banner-layer');
+    function applyIdleBackgroundVisibility() {
+      const layer = document.getElementById('idle-bg-layer');
+      const idleVideo = document.getElementById('idle-bg-video');
       if (!layer) return;
-      const banner = layer.querySelector('.ov-banner');
-      if (!banner) { layer.innerHTML = ''; return; }
-      // Whichever "-in" effect class the banner currently has (ov-fx-slide-
-      // up-in, ov-fx-bounce-in, etc. — the user's chosen whole-banner
-      // animation), swap it for the matching "-out" variant. Only the banner
-      // itself animates out as a whole; the per-element entrance stagger
-      // (title/photo/etc.) doesn't need a mirrored exit choreography.
-      const inClass = [...banner.classList].find((c) => /^ov-fx-.+-in$/.test(c));
-      if (inClass) {
-        banner.classList.remove(inClass);
-        banner.classList.add(inClass.replace(/-in$/, '-out'));
+      const shouldShow = !contentIsLive && lastIdleConfig.enabled && (lastIdleConfig.image || lastIdleConfig.video);
+      if (!shouldShow) {
+        layer.style.opacity = '0';
+        syncVideoState(idleVideo, null, false, { loop: true, playbackRate: 1 });
+        return;
       }
-      if (overlayHideTimer) clearTimeout(overlayHideTimer);
-      overlayHideTimer = setTimeout(() => {
-        layer.innerHTML = '';
-        overlayHideTimer = null;
-      }, 500);
+      if (lastIdleConfig.video) {
+        layer.style.backgroundImage = 'none';
+        syncVideoState(idleVideo, lastIdleConfig.video, true, { loop: true, playbackRate: 1, revealOpacity: 1 });
+      } else {
+        syncVideoState(idleVideo, null, false, { loop: true, playbackRate: 1 });
+        layer.style.backgroundImage = cssUrl(lastIdleConfig.image);
+      }
+      layer.style.opacity = '1';
     }
 
     function setIdleBackground(d) {
-      const layer = document.getElementById('idle-bg-layer');
-      if (!layer) return;
-      const enabled = !!(d && d.enabled);
-      const image = d && d.image ? String(d.image) : null;
-      if (enabled && image) {
-        layer.style.backgroundImage = cssUrl(image);
-        layer.style.opacity = '1';
-      } else {
-        layer.style.opacity = '0';
-      }
+      lastIdleConfig = {
+        enabled: !!(d && d.enabled),
+        image: d && d.image ? String(d.image) : null,
+        video: d && d.video ? String(d.video) : null
+      };
+      applyIdleBackgroundVisibility();
     }
 
     function handleInboundMessage(d, source) {
@@ -581,14 +587,14 @@
           }
           case 'CLEAR':
             hasSynced = true;
-            if (acceptSeq(d.seq)) {
+            if (acceptSeq(d.seq, d.ts)) {
               if (source !== 'idb') mirrorUpdateFallbackAt = Date.now() + 2500;
               clearDisplay({ fade: d.fade !== false, duration: d.transitionDuration });
             }
             break;
           case 'UPDATE':
             hasSynced = true;
-            if (!acceptSeq(d.seq)) return;
+            if (!acceptSeq(d.seq, d.ts)) return;
             // The IndexedDB mirror poll (see syncFromMirror, every 800ms) is a
             // fallback transport for when BroadcastChannel/IPC relay drop a
             // message — but it stays live forever, not just at startup, so a
@@ -611,7 +617,7 @@
             // the idle screen setting back in sync even if the content seq
             // itself gets rejected as stale/duplicate.
             if (state.idleBg) setIdleBackground(state.idleBg);
-            if (!acceptSeq(seq)) return;
+            if (!acceptSeq(seq, d.ts)) return;
             if (source !== 'idb') mirrorUpdateFallbackAt = Date.now() + 2500;
             if (state.kind === 'clear') {
               clearDisplay();
@@ -620,15 +626,6 @@
             }
             break;
           }
-          // Preacher/sermon title-card overlay — independent of the main
-          // content sync above (no seq gating): it's a layer shown/hidden on
-          // top of whatever else is live, not a replacement for it.
-          case 'OVERLAY_SHOW':
-            showOverlayBanner(d);
-            break;
-          case 'OVERLAY_HIDE':
-            hideOverlayBanner();
-            break;
           // Idle screen setting changed live — also independent of content
           // seq gating, same reasoning as above.
           case 'IDLE_BG':
@@ -1274,6 +1271,10 @@
     // Handle update with proper sequencing
     function handleUpdate(d) {
       cancelPendingClear();
+      if (!contentIsLive) {
+        contentIsLive = true;
+        applyIdleBackgroundVisibility();
+      }
       // Store current state
       currentState = { ...currentState, ...d };
       
@@ -2043,110 +2044,17 @@
       return clamp(num, 0.25, 4);
     }
 
-    const seamlessLoopControllers = new WeakMap();
-    function hideVideoElement(videoEl, clearSrc = false) {
-      if (!videoEl) return;
-      videoEl.style.display = 'none';
-      videoEl.style.opacity = '0';
-      videoEl.style.transition = '';
-      if (!videoEl.paused) videoEl.pause();
-      if (clearSrc) {
-        videoEl.removeAttribute('src');
-        videoEl.load();
-      }
-    }
-
-    function getSeamlessLoopController(primaryEl) {
-      if (!primaryEl || !primaryEl.parentElement) return null;
-      let controller = seamlessLoopControllers.get(primaryEl);
-      if (controller) return controller;
-      const secondaryEl = document.createElement('video');
-      secondaryEl.className = primaryEl.className;
-      secondaryEl.muted = true;
-      secondaryEl.playsInline = true;
-      secondaryEl.preload = 'auto';
-      secondaryEl.setAttribute('aria-hidden', 'true');
-      secondaryEl.style.display = 'none';
-      secondaryEl.style.opacity = '0';
-      secondaryEl.style.pointerEvents = 'none';
-      primaryEl.insertAdjacentElement('afterend', secondaryEl);
-      attachVideoErrorFallback(secondaryEl);
-      controller = {
-        primary: primaryEl,
-        secondary: secondaryEl,
-        active: primaryEl,
-        inactive: secondaryEl,
-        rafId: 0,
-        swapping: false,
-        enabled: false,
-        src: '',
-        playbackRate: 1
-      };
-      seamlessLoopControllers.set(primaryEl, controller);
-      return controller;
-    }
-
-    function stopSeamlessLoop(controller, opts = {}) {
-      if (!controller) return;
-      controller.enabled = false;
-      controller.swapping = false;
-      if (controller.rafId) {
-        cancelAnimationFrame(controller.rafId);
-        controller.rafId = 0;
-      }
-      hideVideoElement(controller.secondary, !!opts.clearSrc);
-      if (opts.resetActiveToPrimary) {
-        controller.active = controller.primary;
-        controller.inactive = controller.secondary;
-      }
-      if (opts.clearSrc) controller.src = '';
-    }
-
-    function startSeamlessLoopMonitor(controller) {
-      if (!controller || controller.rafId) return;
-      const fadeMs = 120;
-      const onFrame = () => {
-        if (!controller.enabled) {
-          controller.rafId = 0;
-          return;
-        }
-        const active = controller.active;
-        const inactive = controller.inactive;
-        if (!controller.swapping && active && !active.paused) {
-          const duration = Number(active.duration || 0);
-          const current = Number(active.currentTime || 0);
-          if (Number.isFinite(duration) && duration > 0.4) {
-            const remaining = duration - current;
-            if (remaining <= 0.16) {
-              controller.swapping = true;
-              inactive.currentTime = 0.001;
-              inactive.playbackRate = controller.playbackRate;
-              inactive.loop = false;
-              inactive.style.display = 'block';
-              inactive.style.opacity = '0';
-              inactive.style.transition = `opacity ${fadeMs}ms linear`;
-              active.style.transition = `opacity ${fadeMs}ms linear`;
-              const p = inactive.play();
-              if (p && p.catch) p.catch(() => {});
-              requestAnimationFrame(() => {
-                inactive.style.opacity = `${revealOpacity}`;
-                active.style.opacity = '0';
-              });
-              setTimeout(() => {
-                hideVideoElement(active, false);
-                inactive.style.transition = '';
-                controller.active = inactive;
-                controller.inactive = active;
-                controller.swapping = false;
-              }, fadeMs + 40);
-            }
-          }
-        }
-        controller.rafId = requestAnimationFrame(onFrame);
-      };
-      controller.rafId = requestAnimationFrame(onFrame);
-    }
-
+    // Background videos loop natively (videoEl.loop = true) — a previous
+    // seamless dual-buffer crossfade here (a hidden second <video> pre-
+    // loaded and swapped in ~160ms before the end, to hide the loop seam)
+    // is gone: it doubled decode/GPU memory for every playing background
+    // video, and its swap logic referenced a variable out of scope
+    // (revealOpacity), which threw on the very first loop point and left
+    // its internal state stuck — the video would play once and then just
+    // stop, since native looping was deliberately disabled while that
+    // mechanism was "managing" the element. Native looping alone is a
+    // single element, cannot get stuck, and is what attachVideoErrorFallback's
+    // 'ended' listener now backs up.
     function syncVideoState(videoEl, src, shouldPlay, options = {}) {
       if (!videoEl) return;
       const loop = options.loop !== undefined ? !!options.loop : true;
@@ -2156,19 +2064,10 @@
       const prevSrc = videoEl.dataset.src || '';
       const srcChanged = nextSrc && nextSrc !== prevSrc;
       const wantsFadeOut = !!options.fadeOut;
-      const loopController = getSeamlessLoopController(videoEl);
-      if (loopController && (!loop || !nextSrc || !shouldPlay || srcChanged)) {
-        stopSeamlessLoop(loopController, { clearSrc: !nextSrc && !wantsFadeOut, resetActiveToPrimary: true });
-      }
       if (srcChanged) {
         videoEl.dataset.src = nextSrc;
         videoEl.src = nextSrc;
         videoEl.load();
-        if (loopController) {
-          loopController.secondary.src = nextSrc;
-          loopController.secondary.load();
-          loopController.src = nextSrc;
-        }
       } else if (!nextSrc && prevSrc && !wantsFadeOut) {
         // Only remove source immediately if not fading out
         videoEl.removeAttribute('src');
@@ -2176,54 +2075,14 @@
         videoEl.load();
       }
       const show = !!(shouldPlay && nextSrc);
-      videoEl.loop = loop && !loopController;
+      videoEl.loop = loop;
       videoEl.playbackRate = playbackRate;
       // Backstop for the 'ended' listener in attachVideoErrorFallback: only
       // force-restart when this element is actually supposed to be looping
       // right now (not, say, a one-shot video or one that's being hidden).
+      // Native loop already suppresses 'ended' in the normal case; this
+      // covers the rare edge where it still fires anyway.
       videoEl.dataset.bspWantsLoop = (show && loop) ? '1' : '0';
-      if (loopController) {
-        loopController.playbackRate = playbackRate;
-        loopController.secondary.dataset.bspWantsLoop = (show && loop) ? '1' : '0';
-      }
-
-      if (show && loop && loopController) {
-        const active = loopController.active || videoEl;
-        const inactive = loopController.inactive || loopController.secondary;
-        loopController.enabled = true;
-        active.loop = false;
-        inactive.loop = false;
-        active.playbackRate = playbackRate;
-        inactive.playbackRate = playbackRate;
-        active.muted = true;
-        inactive.muted = true;
-        active.playsInline = true;
-        inactive.playsInline = true;
-        hideVideoElement(inactive, false);
-        if (srcChanged || active.readyState < 2) {
-          active.style.display = 'block';
-          active.style.opacity = '0';
-          const reveal = () => {
-            active.style.transition = 'opacity 0.24s cubic-bezier(0.4, 0, 0.2, 1)';
-            active.style.opacity = `${revealOpacity}`;
-            setTimeout(() => { active.style.transition = ''; }, 280);
-          };
-          if (active.readyState >= 2) reveal();
-          else {
-            active.addEventListener('canplay', function onCanPlay() {
-              active.removeEventListener('canplay', onCanPlay);
-              reveal();
-            });
-          }
-        } else {
-          active.style.display = 'block';
-          active.style.opacity = `${revealOpacity}`;
-        }
-        const p = active.play();
-        if (p && p.catch) p.catch(() => {});
-        startSeamlessLoopMonitor(loopController);
-        return;
-      }
 
       if (show) {
         videoEl.muted = true;
@@ -2256,20 +2115,14 @@
           const p = videoEl.play();
           if (p && p.catch) p.catch(() => {});
         }
-      } else if (options.fadeOut && (videoEl.style.opacity !== '0' || (loopController && loopController.active && loopController.active.style.opacity !== '0')) && videoEl.style.display !== 'none') {
+      } else if (options.fadeOut && videoEl.style.opacity !== '0' && videoEl.style.display !== 'none') {
         // Fade video out smoothly before hiding
         videoEl.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
         videoEl.style.opacity = '0';
-        if (loopController && loopController.active) {
-          loopController.active.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-          loopController.active.style.opacity = '0';
-          if (loopController.inactive) hideVideoElement(loopController.inactive, false);
-        }
         setTimeout(() => {
           videoEl.style.transition = '';
           videoEl.style.display = 'none';
           if (!videoEl.paused) videoEl.pause();
-          if (loopController) stopSeamlessLoop(loopController, { clearSrc: !nextSrc, resetActiveToPrimary: true });
           if (!nextSrc && videoEl.dataset.src) {
             videoEl.removeAttribute('src');
             videoEl.dataset.src = '';
@@ -2282,7 +2135,6 @@
         if (!videoEl.paused) {
           videoEl.pause();
         }
-        if (loopController) stopSeamlessLoop(loopController, { clearSrc: false, resetActiveToPrimary: true });
       }
     }
     
@@ -2716,6 +2568,10 @@
       if (clearTimer) {
         clearTimeout(clearTimer);
         clearTimer = null;
+      }
+      if (contentIsLive) {
+        contentIsLive = false;
+        applyIdleBackgroundVisibility();
       }
       elements.txt.style.opacity = '0';
       elements.bg.style.opacity = '0';

@@ -7,26 +7,11 @@
   <link rel="stylesheet" href="css/panel/00-panel-base.css">
   <link rel="stylesheet" href="css/panel/20-annotate-tools.css">
   <link rel="stylesheet" href="css/panel/90-obs-isolated-mode.css">
-  <link rel="stylesheet" href="css/shared/overlay-banners.css">
 </head>
 <body>
   <div id="app-topbar">
     <div id="app-topbar-title">
-      <svg id="app-topbar-logo" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="tb-face" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#1e3a6e"/><stop offset="40%" stop-color="#152952"/><stop offset="100%" stop-color="#0d1b38"/></linearGradient>
-          <radialGradient id="tb-spec" cx="38%" cy="28%" rx="37.5%" ry="27.5%"><stop offset="0%" stop-color="rgba(255,255,255,0.14)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient>
-          <linearGradient id="tb-cg" x1="256" y1="100" x2="256" y2="420" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#e0edff"/><stop offset="100%" stop-color="#93b4e4"/></linearGradient>
-          <filter id="tb-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b"/><feFlood flood-color="#60a5fa" flood-opacity=".45" result="c"/><feComposite in="c" in2="b" operator="in" result="s"/><feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        </defs>
-        <rect x="36" y="36" width="440" height="440" rx="132" fill="url(#tb-face)"/>
-        <rect x="36" y="36" width="440" height="440" rx="132" fill="url(#tb-spec)"/>
-        <g filter="url(#tb-glow)" transform="translate(134,114) scale(5.8)">
-          <rect x="18" y="5" width="6" height="26" rx="1.5" fill="url(#tb-cg)"/>
-          <rect x="10" y="12" width="22" height="6" rx="1.5" fill="url(#tb-cg)"/>
-          <path d="M8 33C8 33 14 30 21 30 28 30 34 33 34 33L34 36C34 36 28 34 21 34 14 34 8 36 8 36Z" fill="url(#tb-cg)" opacity=".7"/>
-        </g>
-      </svg>
+      <img id="app-topbar-logo" src="assets/church/jrt-logo.png" alt="Logo JRT">
       <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span>
     </div>
   </div>
@@ -269,9 +254,6 @@
           <button class="workspace-font-size-value" id="workspace-font-size-value" type="button" onclick="stepWorkspaceFontSize(1)" title="Click to increase verse font size">50pt</button>
           <button class="workspace-font-size-step" type="button" onclick="stepWorkspaceFontSize(1)" aria-label="Increase verse font size">+</button>
         </div>
-        <button class="btn toolbar-icon-btn" id="btn-overlays" onclick="openOverlaysModal()" title="Overlays (bandeaux titre)" aria-label="Overlays">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><rect x="2" y="15" width="20" height="6" rx="1.5"/><path d="M5 10h6M5 6h10"/></svg>
-        </button>
         <button class="btn toolbar-icon-btn" id="btn-settings" onclick="openModal('settingsModal')" title="Settings" data-i18n-title="common_settings"><svg width="16" height="16" viewBox="1 1 22 22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       </div>
       <div id="preset-popover" class="preset-popover">
@@ -1786,9 +1768,23 @@
               <div class="settings-field"></div>
             </div>
             <div id="idle-screen-image-row" style="display:none;margin-top:12px">
-              <button class="btn" style="width:100%;background:var(--bg-dark);margin-bottom:10px" onclick="pickIdleScreenImage()">📁 Choisir une image</button>
-              <div id="idle-screen-hint" style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:8px">Aucune image sélectionnée</div>
-              <button class="btn feedback-btn-outline" style="width:100%;font-size:11px" onclick="clearIdleScreenImage()">Retirer l'image</button>
+              <div class="settings-field" style="margin-bottom:12px">
+                <label class="settings-label">Type</label>
+                <div class="segmented-picker" id="idle-screen-type-toggle">
+                  <button class="seg-btn active" id="idle-screen-type-image" type="button" onclick="setIdleScreenType('image')">Image</button>
+                  <button class="seg-btn" id="idle-screen-type-video" type="button" onclick="setIdleScreenType('video')">Vidéo</button>
+                </div>
+              </div>
+              <div id="idle-screen-image-picker-row">
+                <button class="btn" style="width:100%;background:var(--bg-dark);margin-bottom:10px" onclick="pickIdleScreenImage()">📁 Choisir une image</button>
+                <div id="idle-screen-hint" style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:8px">Aucune image sélectionnée</div>
+                <button class="btn feedback-btn-outline" style="width:100%;font-size:11px" onclick="clearIdleScreenImage()">Retirer l'image</button>
+              </div>
+              <div id="idle-screen-video-picker-row" style="display:none">
+                <button class="btn" style="width:100%;background:var(--bg-dark);margin-bottom:10px" onclick="pickIdleScreenVideo()">📁 Choisir une vidéo</button>
+                <div id="idle-screen-video-hint" style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:8px">Aucune vidéo sélectionnée</div>
+                <button class="btn feedback-btn-outline" style="width:100%;font-size:11px" onclick="clearIdleScreenVideo()">Retirer la vidéo</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2112,7 +2108,6 @@
               <ul style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin:6px 0 0 18px;padding:0">
                 <li>Recherche et projection de versets bibliques, par livre/chapitre ou par mot-clé</li>
                 <li>Bibliothèque de chants avec paroles synchronisées et playlists (Setlist)</li>
-                <li>Bandeaux d'annonce (Overlays) pour présenter un prédicateur ou une série de prédication</li>
                 <li>Fonds d'écran personnalisables : couleur, dégradé, image ou vidéo en boucle</li>
                 <li>Mode Plein écran et mode Bandeau (Lowerthird) pour la régie vidéo</li>
                 <li>Thèmes, presets et styles personnalisés par élément affiché</li>
@@ -3304,81 +3299,6 @@
     </div>
   </div>
 
-  <!-- Overlays: preacher/sermon title-card banners, shown OVER whatever else
-       is currently projected (not a replacement for Bible/Songs content) -->
-  <div id="overlaysModal" class="modal-overlay">
-    <div class="modal-content" style="width:min(1040px,96vw);max-height:90vh;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
-      <div style="display:flex;align-items:center;gap:10px">
-        <h3 style="margin:0;color:var(--accent);font-size:15px">Overlays — Bandeaux de prédication</h3>
-        <button class="btn" style="margin-left:auto;background:var(--bg-dark)" onclick="closeModal('overlaysModal')">Fermer</button>
-      </div>
-      <div style="display:flex;gap:14px;flex:1 1 auto;min-height:0">
-        <div style="width:210px;flex:0 0 210px;display:flex;flex-direction:column;gap:8px;min-height:0">
-          <button class="btn" style="background:var(--accent)" onclick="createNewOverlayCard()">+ Nouveau bandeau</button>
-          <div id="overlay-card-list" style="flex:1 1 auto;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:4px;min-height:0"></div>
-        </div>
-        <div style="flex:1 1 auto;display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0;padding-right:4px">
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Modèle</label>
-            <div id="overlay-template-picker" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Position et alignement du bandeau</label>
-            <div id="overlay-position-controls" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"></div>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Nom de la série / événement</label>
-            <input type="text" id="overlay-series-name" placeholder="Ex : Dimanche Tzedakah" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0a0d14;color:var(--text);border:1px solid var(--border);border-radius:8px" oninput="scheduleOverlayPreviewUpdate()">
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Thème / titre du message — Entrée pour forcer un retour à la ligne si besoin</label>
-            <textarea id="overlay-title" rows="2" placeholder="Ex : La spiritualité de l'aumône" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0a0d14;color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical" oninput="scheduleOverlayPreviewUpdate()"></textarea>
-          </div>
-          <div style="display:flex;gap:12px">
-            <div style="flex:1">
-              <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Intro (ex : Avec le Prophète)</label>
-              <input type="text" id="overlay-speaker-label" placeholder="Avec le Prophète" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0a0d14;color:var(--text);border:1px solid var(--border);border-radius:8px" oninput="scheduleOverlayPreviewUpdate()">
-            </div>
-            <div style="flex:1">
-              <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Nom du prédicateur</label>
-              <input type="text" id="overlay-speaker-name" placeholder="Joel Francis Tatu" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0a0d14;color:var(--text);border:1px solid var(--border);border-radius:8px" oninput="scheduleOverlayPreviewUpdate()">
-            </div>
-          </div>
-          <div style="display:flex;gap:12px">
-            <div style="flex:1">
-              <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Photo du prédicateur</label>
-              <button class="btn" style="width:100%;background:var(--bg-dark)" onclick="pickOverlaySpeakerPhoto()">📁 Choisir une photo</button>
-              <div id="overlay-speaker-photo-hint" style="font-size:11px;color:var(--text-secondary);margin-top:6px">Aucune photo</div>
-            </div>
-            <div style="flex:1">
-              <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Logo de l'église (partagé entre tous les bandeaux)</label>
-              <button class="btn" style="width:100%;background:var(--bg-dark)" onclick="pickOverlayChurchLogo()">📁 Choisir un logo</button>
-              <div id="overlay-logo-hint" style="font-size:11px;color:var(--text-secondary);margin-top:6px">Aucun logo</div>
-            </div>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Nom de l'église — 2 lignes possibles, ex. nom puis ville (partagé entre tous les bandeaux)</label>
-            <textarea id="overlay-church-name" rows="2" placeholder="Eglise Porte des Cieux&#10;Kinshasa" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#0a0d14;color:var(--text);border:1px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical" oninput="scheduleOverlayPreviewUpdate();saveOverlayGlobalsDebounced()"></textarea>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Apparence détaillée (couleurs, polices, animations)</label>
-            <div id="overlay-style-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
-            <div id="overlay-style-panel" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:rgba(255,255,255,0.02)"></div>
-          </div>
-          <div>
-            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Aperçu</label>
-            <div id="overlay-preview" style="border:1px solid var(--border);border-radius:8px;background:#000;aspect-ratio:16/9;overflow:hidden;position:relative"></div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:auto;padding-top:6px">
-            <button class="btn" style="background:var(--bg-dark)" onclick="deleteCurrentOverlayCard()">🗑 Supprimer</button>
-            <button class="btn" style="background:var(--accent);flex:1" onclick="saveCurrentOverlayCard()">💾 Enregistrer</button>
-            <button class="btn btn-live" id="btn-overlay-toggle" style="min-width:170px" onclick="toggleOverlayLive()">Afficher en direct</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Hidden File Inputs -->
   <input type="file" id="import-file" hidden multiple onchange="handleImport(this)">
   <input type="file" id="import-style-file" hidden accept=".fstemplate,.json,application/json" onchange="handleStyleImport(this)">
@@ -3408,7 +3328,6 @@
   <script src="js/panel/settings-and-controls.js"></script>
   <script src="js/panel/sidebar-and-workspace.js"></script>
   <script src="js/panel/sync-and-output.js"></script>
-  <script src="js/panel/overlays-module.js"></script>
   <script src="js/panel/bootstrap-and-init.js"></script>
   <script src="js/panel/obs-isolated-layout.js"></script>
 
