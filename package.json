@@ -48,7 +48,8 @@
       {
         "provider": "github",
         "owner": "pactocipa",
-        "repo": "message-wmb-worship-pro"
+        "repo": "message-wmb-worship-pro",
+        "releaseType": "release"
       }
     ]
   }
