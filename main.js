@@ -48,7 +48,7 @@ let lastTargetDisplayId = null;
 // the bundled sermon/song files, reachable from the native File menu — so the
 // user can find and (re-)import them even after the automatic first-run
 // import, e.g. if they deleted content and want it back.
-const IMPORT_FOLDER = path.join(app.getPath('documents'), 'Bible Song Pro', 'Fichiers a importer');
+const IMPORT_FOLDER = path.join(app.getPath('documents'), 'Message WMB Worship Pro', 'Fichiers a importer');
 const BUNDLED_DATA_DIR = path.join(APP_SRC_DIR, 'bundled-data');
 
 function ensureImportFolder() {
@@ -266,11 +266,18 @@ function createControlWindow() {
   controlWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    title: 'Bible Song Pro - Control Panel',
+    title: 'Message WMB Worship Pro - Panneau de contrôle',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // Same reasoning as the output window: onAnyControlChange()'s live
+      // push is scheduled via requestAnimationFrame (scheduleLiveUpdate),
+      // which Chromium can throttle heavily in an unfocused/occluded
+      // window — e.g. the operator alt-tabbing away, or the panel sitting
+      // on a non-active monitor. Without this, a background/content change
+      // made while the panel isn't focused can sit unsent for a long time.
+      backgroundThrottling: false
     }
   });
   controlWindow.loadFile(PANEL_HTML);
@@ -313,7 +320,7 @@ function createOutputWindow(targetDisplay, opts = {}) {
     autoHideMenuBar: true,
     backgroundColor: '#000000',
     show: false,
-    title: 'Bible Song Pro - Display',
+    title: 'Message WMB Worship Pro - Projection',
     // Same (default) session/partition as the control window, deliberately —
     // this app's existing BroadcastChannel-based sync between panel and
     // display only works when both windows share the same origin/partition.

@@ -1,7 +1,7 @@
 {
   "name": "bsp-desktop",
   "version": "2.1.0",
-  "description": "Desktop shell (Electron) for Bible Song Pro — projection window management, with NDI output planned as a later phase.",
+  "description": "Desktop shell (Electron) for Message WMB Worship Pro — projection window management, with NDI output planned as a later phase.",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -19,8 +19,8 @@
     "electron@32.3.3": true
   },
   "build": {
-    "appId": "com.biblesongpro.desktop",
-    "productName": "Bible Song Pro Desktop",
+    "appId": "com.jrtkananga.messagewmbworshippro",
+    "productName": "Message WMB Worship Pro",
     "asar": false,
     "files": [
       "main.js",

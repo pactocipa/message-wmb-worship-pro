@@ -156,7 +156,7 @@
       port: '8088',
       password: '',
       displayHost: '',
-      outputInputName: 'Bible Song Pro Output',
+      outputInputName: 'Message WMB Worship Pro Output',
       outputInputKey: '',
       outputMode: VMIX_OUTPUT_MODE_DEDICATED,
       overlayChannel: '1',

@@ -1,4 +1,4 @@
-# Bible Song Pro Desktop
+# Message WMB Worship Pro (Desktop)
 
 Application de bureau (Electron) séparée de "BIBLE_SONG PRO OBS" — **le projet
 original n'est jamais modifié**. Ce dossier contient une copie en lecture seule de
@@ -17,7 +17,7 @@ fenêtre de projection par-dessus, sans onglet navigateur à ouvrir/positionner 
 - La synchronisation panneau ↔ affichage existante (BroadcastChannel) continue de
   fonctionner sans aucune modification, car les deux fenêtres chargent les mêmes
   fichiers dans la même session Electron.
-- **Installateur Windows (.exe) généré** : `dist\Bible Song Pro Desktop Setup 0.1.0.exe`.
+- **Installateur Windows (.exe) généré** : `dist\Message WMB Worship Pro Setup 2.1.0.exe`.
 - **Sermons et chansons préchargés** : `app-src/bundled-data/sermons.json` (1457 sermons)
   et `app-src/bundled-data/songs.json` (1340 chants) sont importés automatiquement au
   tout premier lancement (voir `seedBundledDataIfEmpty()` dans
@@ -29,7 +29,7 @@ fenêtre de projection par-dessus, sans onglet navigateur à ouvrir/positionner 
   donner l'impression que l'application était plantée).
 - **Menu natif "Fichier"** : contient "Importer des fichiers…" (sélecteur de
   fichiers .json, réutilise le même import que le glisser-déposer) et "Ouvrir le
-  dossier des fichiers fournis" (ouvre `Documents/Bible Song Pro/Fichiers a
+  dossier des fichiers fournis" (ouvre `Documents/Message WMB Worship Pro/Fichiers a
   importer/` dans l'Explorateur — contient une copie de sermons.json/songs.json,
   utile pour réimporter après une suppression sans avoir à réinstaller).
 - **Couleur d'arrière-plan du titre/référence réglable** : un champ existait déjà
@@ -99,6 +99,6 @@ puis recopier vers `dist\win-unpacked\resources\app\app-src\bundled-data\` avant
 
 ## Livrable actuel
 
-`dist\Bible Song Pro Desktop Setup 0.1.0.exe` — installateur Windows (NSIS), non
+`dist\Message WMB Worship Pro Setup 2.1.0.exe` — installateur Windows (NSIS), non
 signé, ~112 Mo (inclut les sermons et chansons préchargés, menu Fichier natif,
 couleur d'arrière-plan du titre réglable).

@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bible Song Pro - Control Panel</title>
+  <title>Message WMB Worship Pro - Panneau de contrôle</title>
   <link rel="stylesheet" href="css/panel/00-panel-base.css">
   <link rel="stylesheet" href="css/panel/20-annotate-tools.css">
-  <link rel="stylesheet" href="css/panel/21-ai-helper-toolbar.css">
   <link rel="stylesheet" href="css/panel/90-obs-isolated-mode.css">
-  <link rel="stylesheet" href="css/panel/91-live-scripture-hud.css">
   <link rel="stylesheet" href="css/shared/overlay-banners.css">
 </head>
 <body>
@@ -29,7 +27,7 @@
           <path d="M8 33C8 33 14 30 21 30 28 30 34 33 34 33L34 36C34 36 28 34 21 34 14 34 8 36 8 36Z" fill="url(#tb-cg)" opacity=".7"/>
         </g>
       </svg>
-      <span class="settings-footer-plugin">Bible Song<span class="settings-footer-pro">PRO</span></span>
+      <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span>
     </div>
   </div>
   <script>
@@ -127,86 +125,7 @@
       window.BSPDesktop.onUpdateStatus((payload) => bspSetUpdateUi(payload));
     }
 
-    let bspAiHelperRunning = false;
-
-    function bspSetAiHelperRunning(running) {
-      bspAiHelperRunning = !!running;
-      const btn = document.getElementById('btn-ai-summon');
-      if (!btn) return;
-      btn.classList.toggle('ai-running', bspAiHelperRunning);
-      btn.classList.toggle('ai-stopped', !bspAiHelperRunning);
-      btn.setAttribute('aria-label', bspAiHelperRunning ? 'Stop AI Helper' : 'Start AI Helper');
-      btn.setAttribute('title', bspAiHelperRunning ? 'AI Helper running (click to stop)' : 'AI Helper stopped (click to start)');
-    }
-    window.bspSetAiHelperRunning = bspSetAiHelperRunning;
-
-    function bspHideAiStopConfirm() {
-      const pop = document.getElementById('ai-helper-stop-confirm');
-      if (pop) pop.classList.remove('open');
-    }
-
-    function bspShowAiStopConfirm() {
-      const pop = document.getElementById('ai-helper-stop-confirm');
-      if (pop) pop.classList.add('open');
-    }
-
-    async function bspSendAiRelayMessage(type) {
-      const payload = { type, ts: Date.now(), sender: 'panel' };
-      if (bspIsDesktopMode()) {
-        try {
-          await window.BSPDesktop?.sendVmixOutputMessage?.(payload);
-          return true;
-        } catch (_) {}
-      }
-      if (typeof relaySend === 'function') {
-        const sent = relaySend(payload);
-        if (sent) return true;
-      }
-      if (typeof connectRelay === 'function') {
-        try { connectRelay({ force: true }); } catch (_) {}
-      }
-      await new Promise((resolve) => setTimeout(resolve, 450));
-      if (typeof relaySend === 'function') {
-        return relaySend(payload);
-      }
-      return false;
-    }
-
-    async function bspStartAiHelper() {
-      const toast = (msg) => { try { if (typeof window.showToast === 'function') window.showToast(msg); else console.log('[ai]', msg); } catch (_) {} };
-      const started = await bspSendAiRelayMessage('ai:start');
-      if (!started) {
-        toast('AI relay is not connected. Launch helper first, then connect relay.');
-        return;
-      }
-      bspSetAiHelperRunning(true);
-      toast('AI Helper started');
-    }
-
-    async function bspStopAiHelper() {
-      const toast = (msg) => { try { if (typeof window.showToast === 'function') window.showToast(msg); else console.log('[ai]', msg); } catch (_) {} };
-      const stopped = await bspSendAiRelayMessage('ai:stop');
-      bspSetAiHelperRunning(false);
-      bspHideAiStopConfirm();
-      if (!stopped) {
-        toast('Unable to send stop command. Relay may be disconnected.');
-        return;
-      }
-      toast('AI Helper stopped');
-    }
-
-    // Toggle action for toolbar button: start or stop directly.
-    async function bspSummonAi() {
-      if (bspAiHelperRunning) {
-        await bspStopAiHelper();
-        return;
-      }
-      await bspStartAiHelper();
-    }
-
-    window.bspSummonAi = bspSummonAi;
     window.addEventListener('DOMContentLoaded', () => {
-      bspSetAiHelperRunning(false);
       bspInitUpdateUi();
     });
   </script>
@@ -345,13 +264,6 @@
           </div>
         </div>
         <script src="js/panel/annotate-tools.js"></script>
-        <button class="btn toolbar-icon-btn ai-stopped" id="btn-ai-summon" onclick="bspSummonAi()" title="AI Helper stopped (click to start)" aria-label="Start AI Helper">
-          <span class="ai-helper-indicator" aria-hidden="true"></span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M5.6 5.6l2.1 2.1"/><path d="M16.3 16.3l2.1 2.1"/><path d="M5.6 18.4l2.1-2.1"/><path d="M16.3 7.7l2.1-2.1"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-        <button class="btn toolbar-icon-btn" id="btn-ai-panel" title="Live Scripture HUD" onclick="bspToggleLiveScriptureHud()">
-          <span class="ai-toolbar-label" aria-hidden="true">AI</span>
-        </button>
         <div class="workspace-font-size-control" id="workspace-font-size-control" title="Verse font size" aria-label="Verse font size">
           <button class="workspace-font-size-step" type="button" onclick="stepWorkspaceFontSize(-1)" aria-label="Decrease verse font size">-</button>
           <button class="workspace-font-size-value" id="workspace-font-size-value" type="button" onclick="stepWorkspaceFontSize(1)" title="Click to increase verse font size">50pt</button>
@@ -472,7 +384,7 @@
           <div id="vmix-status-body" style="display:flex;gap:12px;align-items:flex-start;margin-top:10px;flex-wrap:wrap;min-width:0">
             <div style="display:flex;flex-direction:column;gap:2px;min-width:220px;flex:0 1 320px">
               <strong id="vmix-connection-label" style="font-size:12px">vMix disconnected</strong>
-              <span id="vmix-output-label" style="font-size:11px;color:var(--text-secondary)">Output: Bible Song Pro Output</span>
+              <span id="vmix-output-label" style="font-size:11px;color:var(--text-secondary)">Output: Message WMB Worship Pro Output</span>
               <span id="vmix-mode-label" style="font-size:11px;color:var(--text-secondary)">Basic routing</span>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex:1 1 420px;min-width:260px">
@@ -1155,7 +1067,7 @@
           <div style="margin-top:auto;padding:8px 12px">
             <div class="ab-popup-sep" style="margin:4px 0 8px"></div>
             <div style="font-size:11px;color:#6b7a94;text-align:center">
-              <span class="settings-footer-plugin">Bible Song<span class="settings-footer-pro">PRO</span></span><br>
+              <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span><br>
               Multimédia Jésus Le Roc Tabernacle de Kananga • v2.1.0
             </div>
           </div>
@@ -2091,7 +2003,7 @@
               </div>
               <div class="settings-field" style="margin-bottom:0">
                 <label class="settings-label">Output Input Name</label>
-                <input type="text" id="vmix-output-input-name" class="settings-input" placeholder="Bible Song Pro Output">
+                <input type="text" id="vmix-output-input-name" class="settings-input" placeholder="Message WMB Worship Pro Output">
               </div>
               <div class="settings-row" style="margin-bottom:0">
                 <div class="settings-field" style="margin-bottom:0">
@@ -2181,9 +2093,9 @@
           <div class="sm-panel-title">À propos</div>
           <div class="settings-category-content">
             <div class="about-brand-card" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(107,122,148,0.08);border:1px solid var(--border);border-radius:8px;margin-bottom:18px">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" style="width:40px;height:40px;flex:0 0 auto"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <img src="assets/church/jrt-logo.png" alt="Logo JRT" style="width:52px;height:52px;flex:0 0 auto;object-fit:contain">
               <div>
-                <div style="font-size:15px;font-weight:800;color:var(--text)">Multimédia de Jésus Le Roc Tabernacle de Kananga</div>
+                <div style="font-size:15px;font-weight:800;color:var(--text)">Multimédia Jésus Le Roc Tabernacle de Kananga (JRT)</div>
                 <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px">Logiciel de projection biblique &amp; louange — usage interne du ministère</div>
               </div>
             </div>
@@ -2191,7 +2103,7 @@
             <div class="settings-field" style="margin-bottom:16px">
               <label class="settings-label">Présentation</label>
               <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
-                Ce logiciel permet de projeter les textes bibliques, les chants et les prédications pendant les services et activités du Tabernacle de Kananga. Il a été personnalisé pour l'équipe multimédia de l'église : recherche et affichage de versets, gestion des chants et des playlists, bandeaux d'annonce animés pour les prédicateurs, et fonds d'écran (couleur, image ou vidéo) pour l'écran de projection.
+                Ce logiciel permet de projeter les textes bibliques, les chants et les prédications pendant les services et activités de Jésus Le Roc Tabernacle de Kananga (JRT). Il a été personnalisé pour l'équipe multimédia de l'église : recherche et affichage de versets, gestion des chants et des playlists, bandeaux d'annonce animés pour les prédicateurs, et fonds d'écran (couleur, image ou vidéo) pour l'écran de projection.
               </div>
             </div>
 
@@ -2228,7 +2140,7 @@
             <div class="ab-popup-sep" style="margin:16px 0"></div>
             <div style="font-size:11px;color:#6b7a94;text-align:center;line-height:1.6">
               Multimédia de Jésus Le Roc Tabernacle de Kananga<br>
-              Bible Song<span class="settings-footer-pro">PRO</span> — édition personnalisée
+              Message WMB Worship <span class="settings-footer-pro">Pro</span> — édition personnalisée
             </div>
           </div>
         </div>
@@ -3500,407 +3412,5 @@
   <script src="js/panel/bootstrap-and-init.js"></script>
   <script src="js/panel/obs-isolated-layout.js"></script>
 
-  <!-- ═══════════════════════════════════════════════════════
-       Live Scripture HUD — floating draggable window
-  ═══════════════════════════════════════════════════════ -->
-  <!-- HUD HTML -->
-  <div id="live-scripture-hud" class="hud-hidden">
-      <div class="ls-hud-titlebar" id="ls-hud-drag-handle">
-        <div class="ls-hud-title-row">
-        <div class="ls-hud-title-left">
-          <button class="ls-hud-mode-toggle" id="ls-hud-mode-toggle" type="button" title="Switch AI detection mode" aria-label="Switch AI detection mode">
-            <span id="ls-hud-mode-label">Bible</span>
-          </button>
-          <span class="ls-hud-title">Live Scripture</span>
-        </div>
-        <button class="ls-hud-close" type="button" onclick="bspCloseLiveScriptureHud()" title="Close" aria-label="Close Live Scripture HUD">&#x2715;</button>
-      </div>
-      <div class="ls-hud-controls-row">
-        <div class="ls-hud-transcript-inline" id="ls-hud-transcript" data-placeholder="Live transcript will appear here when realtime assist is running."></div>
-        <button class="ls-hud-btn" id="ls-hud-config-btn" type="button" onclick="bspLsHudToggleConfig(event)" title="Toggle Config">Config</button>
-        <button class="ls-hud-btn" type="button" onclick="bspLsHudClear()" title="Clear transcript and results">Clear</button>
-      </div>
-    </div>
-    <div class="ls-hud-config ls-hud-config-hidden" id="ls-hud-config">
-	      <label class="ls-hud-checkline">
-	        <input type="checkbox" id="hud-auto-project" checked>
-	        <span id="hud-auto-project-label">Auto project direct verse references as soon as they are detected</span>
-	      </label>
-	      <label class="ls-hud-checkline" id="hud-auto-project-quoted-line">
-	        <input type="checkbox" id="hud-auto-project-quoted">
-	        <span>Auto project quoted / paraphrased verse matches as soon as they are detected</span>
-	      </label>
-    </div>
-    <div class="ls-hud-body">
-      <div class="ls-hud-split">
-          <div class="ls-hud-block">
-          <div class="ls-hud-block-title" id="ls-hud-results-title">
-            Detected Verses
-            <span class="ls-hud-block-note">Best hit plus close matches</span>
-          </div>
-          <div class="ls-hud-detected-grid">
-            <div class="ls-hud-verse-list best-hit" id="ls-hud-best-hit">
-              <div class="ls-hud-verse-item placeholder">Top detected verse will appear here.</div>
-            </div>
-            <div class="ls-hud-verse-list" id="ls-hud-suggestions">
-              <div class="ls-hud-verse-item placeholder">Other close verse matches will appear here.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ── Live Scripture HUD ──────────────────────────────────────
-    (function () {
-      var hud = document.getElementById('live-scripture-hud');
-      var btn = document.getElementById('btn-ai-panel');
-      var cfgPanel = document.getElementById('ls-hud-config');
-      var dragHandle = document.getElementById('ls-hud-drag-handle');
-      var transcriptEl = document.getElementById('ls-hud-transcript');
-      var bestHitEl = document.getElementById('ls-hud-best-hit');
-      var suggestionsEl = document.getElementById('ls-hud-suggestions');
-      var resultsTitleEl = document.getElementById('ls-hud-results-title');
-      var modeToggleEl = document.getElementById('ls-hud-mode-toggle');
-      var modeLabelEl = document.getElementById('ls-hud-mode-label');
-      var autoProjectEl = document.getElementById('hud-auto-project');
-      var autoProjectQuotedEl = document.getElementById('hud-auto-project-quoted');
-      var autoProjectLabelEl = document.getElementById('hud-auto-project-label');
-      var autoProjectQuotedLineEl = document.getElementById('hud-auto-project-quoted-line');
-      var HUD_SETTINGS_KEY = 'bsp-live-scripture-hud-settings-v1';
-
-      var verseCardRegistry = {};
-      var verseCardSeq = 0;
-
-	      var hudState = {
-	        transcript: '',
-	        bestHit: null,
-	        suggestions: [],
-	        mode: 'bible'
-	      };
-      var hudSettings = null;
-
-      function escapeHtml(value) {
-        return String(value == null ? '' : value)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
-
-	      function formatRef(match) {
-	        if (!match) return '';
-	        if (match.kind === 'song') return String(match.title || match.songTitle || '').trim();
-	        if (!match.book || !match.chapter || !match.verseStart) {
-	          var directRef = String(match.ref || match.reference || match.scripture || '').trim();
-	          return directRef;
-        }
-        var bookDisplay = String(match.book)
-          .toLowerCase()
-          .replace(/\b([a-z])/g, function (_, c) { return c.toUpperCase(); });
-        var tail = String(match.verseStart) + (match.verseEnd ? ('-' + String(match.verseEnd)) : '');
-        return bookDisplay + ' ' + String(match.chapter) + ':' + tail;
-      }
-
-      function renderVerseCard(match, label) {
-        if (!match) return '<div class="ls-hud-verse-item placeholder">' + escapeHtml(label) + '</div>';
-        var ref = formatRef(match) || '-';
-	        var metaParts = [];
-	        if (match.kind === 'song' && match.pageLabel) metaParts.push(String(match.pageLabel));
-	        if (match.versionId) metaParts.push(String(match.versionId));
-	        if (match.reason) metaParts.push(String(match.reason));
-        if (typeof match.confidence === 'number' && isFinite(match.confidence)) {
-          metaParts.push('score ' + String(match.confidence));
-        }
-        var meta = metaParts.length ? ('<div style="font-size:12px;opacity:.76;margin-top:4px;">' + escapeHtml(metaParts.join(' • ')) + '</div>') : '';
-        var excerpt = match.excerpt
-          ? ('<div style="font-size:12px;line-height:1.45;opacity:.9;margin-top:6px;">' + escapeHtml(String(match.excerpt)) + '</div>')
-          : '';
-        var cardId = 'vc-' + (++verseCardSeq);
-        verseCardRegistry[cardId] = match;
-        return ''
-	          + '<div class="ls-hud-verse-item ls-hud-verse-item--clickable" data-vcid="' + cardId + '" onclick="bspLsHudClickVerse(this)" title="Click to display ' + escapeHtml(ref) + '">'
-          +   '<div style="font-weight:800;">' + escapeHtml(ref) + '</div>'
-          +   meta
-          +   excerpt
-          + '</div>';
-      }
-
-	      function normalizeHudSettings(parsed) {
-	        var source = parsed && typeof parsed === 'object' ? parsed : {};
-	        var bible = source.bible && typeof source.bible === 'object' ? source.bible : {};
-	        var song = source.song && typeof source.song === 'object' ? source.song : {};
-	        return {
-	          aiMode: source.aiMode === 'song' ? 'song' : 'bible',
-	          bible: {
-	            autoProject: Object.prototype.hasOwnProperty.call(bible, 'autoProject') ? bible.autoProject !== false : source.autoProject !== false,
-	            autoProjectQuoted: Object.prototype.hasOwnProperty.call(bible, 'autoProjectQuoted') ? !!bible.autoProjectQuoted : !!source.autoProjectQuoted
-	          },
-	          song: {
-	            autoProject: Object.prototype.hasOwnProperty.call(song, 'autoProject') ? song.autoProject !== false : true
-	          }
-	        };
-	      }
-
-	      function readSettings() {
-	        try {
-	          return normalizeHudSettings(JSON.parse(localStorage.getItem(HUD_SETTINGS_KEY) || '{}'));
-	        } catch (_) {
-	          return normalizeHudSettings({});
-	        }
-	      }
-
-      function saveSettings(next) {
-        try { localStorage.setItem(HUD_SETTINGS_KEY, JSON.stringify(next || {})); } catch (_) {}
-      }
-
-	      function getModeConfig(mode) {
-	        var settings = hudSettings || normalizeHudSettings({});
-	        return mode === 'song' ? settings.song : settings.bible;
-	      }
-
-	      function syncModeConfigUi() {
-	        var isSong = hudState.mode === 'song';
-	        var config = getModeConfig(hudState.mode);
-	        if (autoProjectEl) autoProjectEl.checked = config.autoProject !== false;
-	        if (autoProjectQuotedEl) autoProjectQuotedEl.checked = !!config.autoProjectQuoted;
-	        if (autoProjectLabelEl) {
-	          autoProjectLabelEl.textContent = isSong
-	            ? 'Auto project detected songs as soon as a confident lyric match is found'
-	            : 'Auto project direct verse references as soon as they are detected';
-	        }
-	        if (autoProjectQuotedLineEl) {
-	          autoProjectQuotedLineEl.classList.toggle('ls-hud-config-row-hidden', isSong);
-	        }
-	      }
-
-	      function applySettingsToUi(settings) {
-	        hudSettings = normalizeHudSettings(settings);
-	        hudState.mode = hudSettings.aiMode;
-	        syncModeConfigUi();
-	        updateModeUi();
-	        publishAiMode();
-	      }
-
-	      function settingsFromUi() {
-	        if (!hudSettings) hudSettings = normalizeHudSettings({});
-	        hudSettings.aiMode = hudState.mode === 'song' ? 'song' : 'bible';
-	        if (hudSettings.aiMode === 'song') {
-	          hudSettings.song.autoProject = !!(autoProjectEl && autoProjectEl.checked);
-	        } else {
-	          hudSettings.bible.autoProject = !!(autoProjectEl && autoProjectEl.checked);
-	          hudSettings.bible.autoProjectQuoted = !!(autoProjectQuotedEl && autoProjectQuotedEl.checked);
-	        }
-	        var activeConfig = getModeConfig(hudSettings.aiMode);
-	        return {
-	          aiMode: hudSettings.aiMode,
-	          autoProject: activeConfig.autoProject !== false,
-	          autoProjectQuoted: !!activeConfig.autoProjectQuoted
-	        };
-	      }
-
-	      function persistSettingsFromUi() {
-	        settingsFromUi();
-	        saveSettings(hudSettings);
-	        publishAiMode();
-	      }
-
-	      function renderHud() {
-	        verseCardRegistry = {};
-	        updateModeUi();
-	        if (transcriptEl) transcriptEl.textContent = hudState.transcript || '';
-	        if (bestHitEl) {
-	          bestHitEl.innerHTML = hudState.bestHit
-	            ? renderVerseCard(hudState.bestHit, '')
-	            : '<div class="ls-hud-verse-item placeholder">' + (hudState.mode === 'song' ? 'Top detected song will appear here.' : 'Top detected verse will appear here.') + '</div>';
-	        }
-        if (suggestionsEl) {
-          var bestRef = formatRef(hudState.bestHit);
-          var others = (Array.isArray(hudState.suggestions) ? hudState.suggestions : []).filter(function (entry) {
-            return formatRef(entry) && formatRef(entry) !== bestRef;
-          });
-	          suggestionsEl.innerHTML = others.length
-	            ? others.map(function (entry) { return renderVerseCard(entry, ''); }).join('')
-	            : '<div class="ls-hud-verse-item placeholder">' + (hudState.mode === 'song' ? 'Other close song matches will appear here.' : 'Other close verse matches will appear here.') + '</div>';
-	        }
-	      }
-
-	      function updateModeUi() {
-	        var isSong = hudState.mode === 'song';
-	        if (modeLabelEl) modeLabelEl.textContent = isSong ? 'Song' : 'Bible';
-	        if (modeToggleEl) {
-	          modeToggleEl.classList.toggle('is-song', isSong);
-	          modeToggleEl.setAttribute('aria-pressed', isSong ? 'true' : 'false');
-	          modeToggleEl.title = isSong ? 'AI mode: Song' : 'AI mode: Bible';
-	        }
-	        if (resultsTitleEl) {
-	          resultsTitleEl.textContent = isSong ? 'Detected Songs' : 'Detected Verses';
-	        }
-	        if (transcriptEl) {
-	          transcriptEl.setAttribute('data-placeholder', isSong
-	            ? 'Live transcript will appear here while AI listens for songs.'
-	            : 'Live transcript will appear here when realtime assist is running.');
-	        }
-	        syncModeConfigUi();
-	      }
-
-	      function publishAiMode() {
-	        var mode = hudState.mode === 'song' ? 'song' : 'bible';
-	        var msg = { type: 'ai:mode', mode: mode, sender: 'control', ts: Date.now() };
-	        try {
-	          if (typeof relaySend === 'function') relaySend(msg);
-	        } catch (_) {}
-	        try {
-	          if (typeof channel !== 'undefined' && channel) channel.postMessage(msg);
-	        } catch (_) {}
-	      }
-
-	      window.bspPublishAiMode = publishAiMode;
-
-      window.bspGetLiveScriptureHudSettings = function () {
-        return settingsFromUi();
-      };
-
-	      window.bspLsHudClickVerse = function (el) {
-        var cardId = el && el.getAttribute('data-vcid');
-        if (!cardId) return;
-	        var match = verseCardRegistry[cardId];
-	        if (!match) return;
-	        if (match.kind === 'song' && typeof window.bspLsHudProjectSongMatch === 'function') {
-	          window.bspLsHudProjectSongMatch(match);
-	          return;
-	        }
-	        if (typeof window.bspLsHudProjectMatch === 'function') {
-	          window.bspLsHudProjectMatch(match);
-	        }
-      };
-
-      window.bspLiveScriptureHudUpdate = function (payload) {
-        var next = payload || {};
-	        if (typeof next.transcript === 'string') hudState.transcript = next.transcript;
-	        if (next.mode === 'song' || next.mode === 'bible') hudState.mode = next.mode;
-	        if (Object.prototype.hasOwnProperty.call(next, 'bestHit')) hudState.bestHit = next.bestHit || null;
-        if (Array.isArray(next.suggestions)) hudState.suggestions = next.suggestions.slice(0, 8);
-        renderHud();
-      };
-
-      // Toggle open/close
-      window.bspToggleLiveScriptureHud = function () {
-        var hidden = hud.classList.toggle('hud-hidden');
-        btn.classList.toggle('hud-open', !hidden);
-        if (!hidden) {
-          if (!hudPositionInitialized) {
-            setDefaultHudPosition();
-            hudPositionInitialized = true;
-          }
-          ensureInBounds();
-        }
-      };
-      window.bspCloseLiveScriptureHud = function () {
-        hud.classList.add('hud-hidden');
-        btn.classList.remove('hud-open');
-      };
-
-      // Config panel toggle
-      window.bspLsHudToggleConfig = function (e) {
-        if (e) e.stopPropagation();
-        cfgPanel.classList.toggle('ls-hud-config-hidden');
-      };
-
-      // Clear transcript and verse lists
-	      window.bspLsHudClear = function () {
-	        hudState.transcript = '';
-	        hudState.bestHit = null;
-        hudState.suggestions = [];
-        renderHud();
-      };
-
-      // ── Drag to move ──
-      var dragging = false, startX, startY, origX, origY;
-      var hudPositionInitialized = false;
-
-      function getPos() {
-        var rect = hud.getBoundingClientRect();
-        return { x: rect.left, y: rect.top };
-      }
-
-      function ensureInBounds() {
-        var pos = getPos();
-        var maxX = window.innerWidth - hud.offsetWidth - 4;
-        var maxY = window.innerHeight - hud.offsetHeight - 4;
-        var x = Math.max(4, Math.min(pos.x, maxX));
-        var y = Math.max(4, Math.min(pos.y, maxY));
-        hud.style.left = x + 'px';
-        hud.style.top = y + 'px';
-        hud.style.right = 'auto';
-      }
-
-      function setDefaultHudPosition() {
-        var sidebar = document.getElementById('sidebar');
-        var versionBar = document.getElementById('version-bar');
-        if (!sidebar) return;
-
-        var sidebarRect = sidebar.getBoundingClientRect();
-        var versionRect = versionBar ? versionBar.getBoundingClientRect() : null;
-        var margin = 8;
-
-        var targetX = sidebarRect.right - hud.offsetWidth - margin;
-        var targetY = versionRect ? (versionRect.bottom + margin) : (sidebarRect.top + margin);
-
-        hud.style.left = Math.max(4, targetX) + 'px';
-        hud.style.top = Math.max(4, targetY) + 'px';
-        hud.style.right = 'auto';
-        ensureInBounds();
-      }
-
-      dragHandle.addEventListener('mousedown', function (e) {
-        if (e.target.closest('button')) return; // don't drag on buttons
-        dragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        var pos = getPos();
-        origX = pos.x;
-        origY = pos.y;
-        hud.style.left = origX + 'px';
-        hud.style.top = origY + 'px';
-        hud.style.right = 'auto';
-        e.preventDefault();
-      });
-
-      document.addEventListener('mousemove', function (e) {
-        if (!dragging) return;
-        var dx = e.clientX - startX;
-        var dy = e.clientY - startY;
-        var nx = origX + dx;
-        var ny = origY + dy;
-        var maxX = window.innerWidth - hud.offsetWidth - 4;
-        var maxY = window.innerHeight - hud.offsetHeight - 4;
-        hud.style.left = Math.max(4, Math.min(nx, maxX)) + 'px';
-        hud.style.top = Math.max(4, Math.min(ny, maxY)) + 'px';
-      });
-
-      document.addEventListener('mouseup', function () { dragging = false; });
-
-	      var initialSettings = readSettings();
-	      applySettingsToUi(initialSettings);
-		      if (modeToggleEl) modeToggleEl.addEventListener('click', function (e) {
-		        e.stopPropagation();
-	        settingsFromUi();
-		        hudState.mode = hudState.mode === 'song' ? 'bible' : 'song';
-		        hudState.bestHit = null;
-		        hudState.suggestions = [];
-	        if (hudSettings) hudSettings.aiMode = hudState.mode;
-	        syncModeConfigUi();
-		        persistSettingsFromUi();
-		        renderHud();
-		      });
-	      if (autoProjectEl) autoProjectEl.addEventListener('change', persistSettingsFromUi);
-	      if (autoProjectQuotedEl) autoProjectQuotedEl.addEventListener('change', persistSettingsFromUi);
-	      setInterval(publishAiMode, 5000);
-	      renderHud();
-    })();
-  </script>
 </body>
 </html>

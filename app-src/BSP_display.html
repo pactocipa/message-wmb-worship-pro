@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bible Song Pro - Display</title>
+  <title>Message WMB Worship Pro - Projection</title>
   <!-- Loaded as non-blocking preloads (rel=preload + swap to stylesheet on load)
        instead of plain <link rel="stylesheet">: on a slow/offline projection PC,
        render-blocking font requests here could hold up opening the projection
@@ -184,6 +184,16 @@
     const MIN_SONG_LT_NO_BG_TOP_PAD_PX = 24;
     // Debug mode controlled by URL param `?debug=1` or `?debug`
     const DEBUG_MODE = new URLSearchParams(window.location.search).has('debug');
+
+    // An unquoted CSS url(...) token is invalid the moment the URL contains a
+    // space (or a few other characters) — the browser silently discards the
+    // whole property assignment rather than throwing, so a background image
+    // whose path/filename has a space in it (or a pasted URL that isn't
+    // percent-encoded) can appear to just do nothing. Always quoting closes
+    // that gap regardless of what encoding the URL happens to already have.
+    function cssUrl(u) {
+      return `url("${String(u).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`;
+    }
     
     // DOM Elements
     const elements = {
@@ -369,7 +379,7 @@
         }, 1200);
       }
 
-      console.log('Bible Song Pro Display initialized');
+      console.log('Message WMB Worship Pro Display initialized');
     }
     
     // Handle incoming messages
@@ -549,7 +559,7 @@
       const enabled = !!(d && d.enabled);
       const image = d && d.image ? String(d.image) : null;
       if (enabled && image) {
-        layer.style.backgroundImage = `url(${image})`;
+        layer.style.backgroundImage = cssUrl(image);
         layer.style.opacity = '1';
       } else {
         layer.style.opacity = '0';
@@ -571,11 +581,24 @@
           }
           case 'CLEAR':
             hasSynced = true;
-            if (acceptSeq(d.seq)) clearDisplay({ fade: d.fade !== false, duration: d.transitionDuration });
+            if (acceptSeq(d.seq)) {
+              if (source !== 'idb') mirrorUpdateFallbackAt = Date.now() + 2500;
+              clearDisplay({ fade: d.fade !== false, duration: d.transitionDuration });
+            }
             break;
           case 'UPDATE':
             hasSynced = true;
             if (!acceptSeq(d.seq)) return;
+            // The IndexedDB mirror poll (see syncFromMirror, every 800ms) is a
+            // fallback transport for when BroadcastChannel/IPC relay drop a
+            // message — but it stays live forever, not just at startup, so a
+            // background/content change made in quick succession could get
+            // raced and overwritten by a slightly-stale mirrored snapshot
+            // arriving on its next poll tick. Re-arming this window on every
+            // real-time (non-mirror) delivery keeps the mirror strictly a
+            // fallback: it only gets to apply once real-time delivery has
+            // actually gone quiet for a couple seconds.
+            if (source !== 'idb') mirrorUpdateFallbackAt = Date.now() + 2500;
             applyUpdateWithThrottle(d);
             break;
           case 'SYNC_STATE': {
@@ -589,6 +612,7 @@
             // itself gets rejected as stale/duplicate.
             if (state.idleBg) setIdleBackground(state.idleBg);
             if (!acceptSeq(seq)) return;
+            if (source !== 'idb') mirrorUpdateFallbackAt = Date.now() + 2500;
             if (state.kind === 'clear') {
               clearDisplay();
             } else if (state.kind === 'update' && payload) {
@@ -824,7 +848,7 @@
       (fonts || []).forEach(f => {
         if (!f || !f.name || !f.dataUrl || loadedFonts.has(f.name)) return;
         try {
-          const face = new FontFace(f.name, `url(${f.dataUrl})`);
+          const face = new FontFace(f.name, cssUrl(f.dataUrl));
           face.load().then(loaded => document.fonts.add(loaded)).catch(() => {});
         } catch (e) {
           const style = document.createElement('style');
@@ -1308,7 +1332,7 @@
       
       // Handle background
       handleBackground(d, mode, isBible);
-      
+
       // Apply configured transition
       applyTransitionEffects(d, mode, isBible);
 
@@ -1796,7 +1820,7 @@
       
       // Background image for main bar
       if (d.bgEnabled && d.bgType === 'image' && d.bgImage) {
-        elements.customMainBar.style.backgroundImage = `url(${d.bgImage})`;
+        elements.customMainBar.style.backgroundImage = cssUrl(d.bgImage);
         elements.customMainBar.style.backgroundSize = 'cover';
         elements.customMainBar.style.backgroundPosition = 'center';
         elements.customMainBar.style.backgroundBlendMode = 'overlay';
@@ -2367,13 +2391,13 @@
                 elements.ltInner.style.backgroundImage = 'none';
                 elements.ltInner.style.backgroundColor = 'transparent';
               } else if (bgGifSrc) {
-                elements.ltInner.style.backgroundImage = `url(${bgGifSrc})`;
+                elements.ltInner.style.backgroundImage = cssUrl(bgGifSrc);
                 elements.ltInner.style.backgroundColor = 'transparent';
               } else if (bgYoutubeSrc) {
                 elements.ltInner.style.backgroundImage = 'none';
                 elements.ltInner.style.backgroundColor = 'transparent';
               } else if (d.bgType === 'image' && d.bgImage) {
-                elements.ltInner.style.backgroundImage = `url(${d.bgImage})`;
+                elements.ltInner.style.backgroundImage = cssUrl(d.bgImage);
                 elements.ltInner.style.backgroundColor = 'transparent';
               } else {
                 const gradStart = d.bgGradientShadow || d.bgColor || 'black';
@@ -2517,13 +2541,13 @@
               elements.bg.style.backgroundImage = 'none';
               elements.bg.style.backgroundColor = 'transparent';
             } else if (bgGifSrc) {
-              elements.bg.style.backgroundImage = `url(${bgGifSrc})`;
+              elements.bg.style.backgroundImage = cssUrl(bgGifSrc);
               elements.bg.style.backgroundColor = 'transparent';
             } else if (bgYoutubeSrc) {
               elements.bg.style.backgroundImage = 'none';
               elements.bg.style.backgroundColor = 'transparent';
             } else if (d.bgType === 'image' && d.bgImage) {
-              elements.bg.style.backgroundImage = `url(${d.bgImage})`;
+              elements.bg.style.backgroundImage = cssUrl(d.bgImage);
               elements.bg.style.backgroundColor = 'transparent';
             } else {
               const gradStart = d.bgGradientShadow || d.bgColor || 'black';
@@ -2816,7 +2840,7 @@
       updateSettings: handleUpdate
     };
     
-    console.log('Bible Song Pro Display loaded successfully');
+    console.log('Message WMB Worship Pro Display loaded successfully');
 
   </script>
 </body>

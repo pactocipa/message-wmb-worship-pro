@@ -1,4 +1,4 @@
-# Bible Song Pro Desktop — Multimédia Jésus Le Roc Tabernacle de Kananga
+# Message WMB Worship Pro — Multimédia Jésus Le Roc Tabernacle de Kananga (JRT)
 
 Logiciel de projection biblique et de louange, personnalisé pour l'équipe multimédia de l'église Jésus Le Roc Tabernacle de Kananga.
 
@@ -29,7 +29,7 @@ Synchronisation en temps réel entre le panneau et l'écran de projection via `B
 
 ## Utilisation (application bureau)
 
-1. Lancer `Bible Song Pro Desktop.exe`
+1. Lancer `Message WMB Worship Pro.exe`
 2. Sélectionner un chant, un verset ou un élément de la playlist dans le panneau
 3. Ajuster l'apparence dans Paramètres si besoin (police, couleurs, fond, position)
 4. Cliquer sur Live pour projeter sur l'écran de sortie
