@@ -23,21 +23,31 @@
     function bspSetUpdateUi(payload) {
       const statusEl = document.getElementById('settings-update-status');
       const checkBtn = document.getElementById('settings-update-check-btn');
-      const downloadBtn = document.getElementById('settings-update-download-btn');
-      const installBtn = document.getElementById('settings-update-install-btn');
       const notesEl = document.getElementById('settings-update-notes');
-      if (!statusEl || !checkBtn || !downloadBtn || !installBtn) return;
+      const progressWrap = document.getElementById('settings-update-progress-wrap');
+      const progressBar = document.getElementById('settings-update-progress-bar');
+      const progressPct = document.getElementById('settings-update-progress-pct');
+      if (!statusEl || !checkBtn) return;
 
       const state = String(payload && payload.state || 'idle');
       const percent = payload && typeof payload.percent === 'number' ? Math.max(0, Math.min(100, payload.percent)) : 0;
       const version = payload && payload.version ? String(payload.version) : '';
       const releaseNotes = payload && payload.releaseNotes ? String(payload.releaseNotes) : '';
+      const countdown = payload && typeof payload.countdown === 'number' ? payload.countdown : null;
 
-      downloadBtn.style.display = state === 'available' ? '' : 'none';
-      installBtn.style.display = state === 'downloaded' ? '' : 'none';
+      // Once an update is found, the whole flow (download -> install ->
+      // restart) runs on its own — disable the button so it can't be
+      // re-triggered mid-flow, and re-enable only once idle/error/up-to-date.
+      const busy = state === 'checking' || state === 'available' || state === 'downloading' || state === 'downloaded';
+      checkBtn.disabled = busy;
+      checkBtn.style.opacity = busy ? '0.6' : '';
+
+      if (progressWrap) progressWrap.style.display = (state === 'downloading') ? '' : 'none';
+      if (progressBar) progressBar.style.width = `${percent}%`;
+      if (progressPct) progressPct.textContent = `${Math.round(percent)}%`;
 
       if (notesEl) {
-        if (releaseNotes && (state === 'available' || state === 'downloaded')) {
+        if (releaseNotes && (state === 'available' || state === 'downloading' || state === 'downloaded')) {
           notesEl.style.display = '';
           notesEl.textContent = releaseNotes.substring(0, 300) + (releaseNotes.length > 300 ? '...' : '');
         } else {
@@ -48,11 +58,13 @@
       if (state === 'checking') {
         statusEl.textContent = 'Vérification des mises à jour...';
       } else if (state === 'available') {
-        statusEl.textContent = version ? `Mise à jour disponible : v${version}` : 'Mise à jour disponible';
+        statusEl.textContent = version ? `Mise à jour v${version} trouvée, téléchargement...` : 'Mise à jour trouvée, téléchargement...';
       } else if (state === 'downloading') {
-        statusEl.textContent = `Téléchargement : ${Math.round(percent)}%`;
+        statusEl.textContent = `Téléchargement de la mise à jour : ${Math.round(percent)}%`;
       } else if (state === 'downloaded') {
-        statusEl.textContent = version ? `Prêt à installer : v${version}` : 'Mise à jour téléchargée, prête à installer.';
+        statusEl.textContent = countdown != null
+          ? `Mise à jour installée. Redémarrage dans ${countdown}s...`
+          : (version ? `Prêt à installer : v${version}` : 'Mise à jour téléchargée.');
       } else if (state === 'none') {
         statusEl.textContent = 'Vous êtes à jour.';
       } else if (state === 'dev-mode') {
@@ -72,40 +84,18 @@
       }
     }
 
-    async function bspDownloadUpdate() {
-      if (!window.BSPDesktop?.downloadUpdate) return;
-      const result = await window.BSPDesktop.downloadUpdate();
-      if (result && result.ok === false) {
-        bspSetUpdateUi({ state: 'error', message: result.error || 'Échec du téléchargement.' });
-      }
-    }
-
-    async function bspInstallUpdateNow() {
-      if (!window.BSPDesktop?.installUpdateNow) return;
-      const result = await window.BSPDesktop.installUpdateNow();
-      if (result && result.ok === false) {
-        bspSetUpdateUi({ state: 'error', message: result.error || "Échec de l'installation." });
-      }
-    }
-
     function bspInitUpdateUi() {
       const statusEl = document.getElementById('settings-update-status');
       const checkBtn = document.getElementById('settings-update-check-btn');
-      const downloadBtn = document.getElementById('settings-update-download-btn');
-      const installBtn = document.getElementById('settings-update-install-btn');
-      if (!statusEl || !checkBtn || !downloadBtn || !installBtn) return;
+      if (!statusEl || !checkBtn) return;
 
       if (!bspIsDesktopMode() || !window.BSPDesktop?.checkForUpdates) {
         statusEl.textContent = 'Mises à jour indisponibles dans ce mode.';
         checkBtn.style.display = 'none';
-        downloadBtn.style.display = 'none';
-        installBtn.style.display = 'none';
         return;
       }
 
       checkBtn.onclick = bspCheckForUpdates;
-      downloadBtn.onclick = bspDownloadUpdate;
-      installBtn.onclick = bspInstallUpdateNow;
       bspSetUpdateUi({ state: 'idle' });
       window.BSPDesktop.onUpdateStatus((payload) => bspSetUpdateUi(payload));
     }
@@ -1050,7 +1040,7 @@
             <div class="ab-popup-sep" style="margin:4px 0 8px"></div>
             <div style="font-size:11px;color:#6b7a94;text-align:center">
               <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span><br>
-              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.1.0
+              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.1.1
             </div>
           </div>
         </div>
@@ -2124,11 +2114,15 @@
             <div class="settings-field" style="margin-top:16px">
               <label class="settings-label">Mises à jour</label>
               <div id="settings-update-status" style="font-size:12px;color:var(--text);padding:8px;background:rgba(107,122,148,0.15);border-radius:4px;margin-bottom:10px;text-align:center">Statut : inconnu</div>
+              <div id="settings-update-progress-wrap" style="display:none;margin-bottom:10px">
+                <div style="height:8px;border-radius:4px;background:rgba(107,122,148,0.2);overflow:hidden">
+                  <div id="settings-update-progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:4px;transition:width 0.2s linear"></div>
+                </div>
+                <div id="settings-update-progress-pct" style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:4px">0%</div>
+              </div>
               <div id="settings-update-notes" style="font-size:11px;color:#6b7a94;padding:10px;background:rgba(107,122,148,0.08);border-left:3px solid var(--accent);border-radius:4px;line-height:1.5;display:none;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;max-height:150px;overflow-y:auto"></div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center">
                 <button class="btn" id="settings-update-check-btn" type="button" style="padding:8px 14px;font-size:11px">Vérifier les mises à jour</button>
-                <button class="btn" id="settings-update-download-btn" type="button" style="padding:8px 14px;font-size:11px;display:none;background:var(--accent)">Télécharger</button>
-                <button class="btn" id="settings-update-install-btn" type="button" style="padding:8px 14px;font-size:11px;display:none;background:var(--accent)">Installer &amp; redémarrer</button>
               </div>
             </div>
 

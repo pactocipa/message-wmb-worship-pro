@@ -467,14 +467,16 @@ ipcMain.on('bsp:relay-to-control', (event, msg) => {
 });
 
 // --- Auto-update (electron-updater, GitHub Releases) ---
-// Manual, button-driven flow (never auto-checks/auto-downloads on its own) —
-// the panel's "Check for Updates" / "Download" / "Install & Restart" buttons
-// drive this directly, matching the existing update UI's expectations, just
-// backed by a real updater now instead of only linking out to a releases
-// page. Publish target is configured in package.json (build.publish), which
-// points at the church's own GitHub repo.
-autoUpdater.autoDownload = false;
+// One-click flow: the panel's "Verifier les mises a jour" button only
+// triggers the CHECK — everything past that (download, install, restart) then
+// runs automatically with no further clicks needed, since the church's
+// operators shouldn't have to understand a multi-step updater UI. Publish
+// target is configured in package.json (build.publish), which points at the
+// church's own GitHub repo.
+autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = false;
+
+const INSTALL_COUNTDOWN_SECONDS = 5;
 
 function sendUpdateStatus(payload) {
   if (controlWindow && !controlWindow.isDestroyed()) {
@@ -491,7 +493,20 @@ autoUpdater.on('download-progress', (progress) => {
   sendUpdateStatus({ state: 'downloading', percent: progress && progress.percent });
 });
 autoUpdater.on('update-downloaded', (info) => {
-  sendUpdateStatus({ state: 'downloaded', version: info && info.version });
+  sendUpdateStatus({ state: 'downloaded', version: info && info.version, countdown: INSTALL_COUNTDOWN_SECONDS });
+  // Give the operator a few seconds to see what's happening (and to notice if
+  // they need to abort — e.g. mid-service) before the app closes itself and
+  // relaunches into the installed update.
+  let remaining = INSTALL_COUNTDOWN_SECONDS;
+  const tick = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(tick);
+      autoUpdater.quitAndInstall();
+      return;
+    }
+    sendUpdateStatus({ state: 'downloaded', version: info && info.version, countdown: remaining });
+  }, 1000);
 });
 autoUpdater.on('error', (err) => {
   console.error('[main] autoUpdater error:', err);
@@ -505,15 +520,6 @@ ipcMain.handle('bsp:checkForUpdates', async () => {
   }
   try {
     await autoUpdater.checkForUpdates();
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, error: err && err.message ? err.message : String(err) };
-  }
-});
-
-ipcMain.handle('bsp:downloadUpdate', async () => {
-  try {
-    await autoUpdater.downloadUpdate();
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err && err.message ? err.message : String(err) };

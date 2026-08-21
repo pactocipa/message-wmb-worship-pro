@@ -50,11 +50,10 @@ contextBridge.exposeInMainWorld('BSPDesktop', {
   // cross the context bridge at all, which is the one part of that approach
   // that isn't fully verifiable without a live Electron window to test in.
   pickMediaFile: (opts) => ipcRenderer.invoke('bsp:pickMediaFile', opts),
-  // Manual, button-driven auto-update via electron-updater / GitHub Releases
-  // (see main.js) — checkForUpdates/downloadUpdate/installUpdateNow never run
-  // on their own; the panel's Settings > À propos update controls call these.
+  // One-click auto-update via electron-updater / GitHub Releases (see
+  // main.js) — checkForUpdates is the only step the panel triggers; download,
+  // install, and restart then run on their own once an update is found.
   checkForUpdates: () => ipcRenderer.invoke('bsp:checkForUpdates'),
-  downloadUpdate: () => ipcRenderer.invoke('bsp:downloadUpdate'),
   installUpdateNow: () => ipcRenderer.invoke('bsp:installUpdateNow'),
   onUpdateStatus: (callback) => {
     ipcRenderer.on('bsp:updateStatus', (event, payload) => callback(payload));
