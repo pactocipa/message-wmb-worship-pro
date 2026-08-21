@@ -1,6 +1,6 @@
 {
   "name": "bsp-desktop",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Desktop shell (Electron) for Message WMB Worship Pro — projection window management, with NDI output planned as a later phase.",
   "main": "main.js",
   "private": true,

@@ -176,7 +176,6 @@
           <button class="t-btn active" id="mode-btn" onclick="setEditorMode('btn')"><span data-i18n="ui_mode_buttons">Buttons</span></button>
         </div>
         <button class="btn toolbar-icon-btn" id="btn-output-go-live" onclick="toggleOutputLive()" title="Output (projection window)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="16" x2="12" y2="20"/></svg></button>
-        <button class="btn toolbar-icon-btn" id="btn-import" onclick="triggerImport()" title="Import" data-i18n-title="common_import"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         <button class="btn toolbar-icon-btn" id="btn-preset" style="position:relative" onclick="togglePresetPopover()" title="Animation" data-i18n-title="ui_animation"><span style="font-family:'Georgia',serif;font-style:italic;font-size:16px;font-weight:900;line-height:1">fx</span></button>
         <div class="annotate-wrap">
           <button class="btn toolbar-icon-btn" id="btn-annotate" title="Annotate" data-i18n-title="ui_annotate">
@@ -244,7 +243,6 @@
           <button class="workspace-font-size-value" id="workspace-font-size-value" type="button" onclick="stepWorkspaceFontSize(1)" title="Click to increase verse font size">50pt</button>
           <button class="workspace-font-size-step" type="button" onclick="stepWorkspaceFontSize(1)" aria-label="Increase verse font size">+</button>
         </div>
-        <button class="btn toolbar-icon-btn" id="btn-settings" onclick="openModal('settingsModal')" title="Settings" data-i18n-title="common_settings"><svg width="16" height="16" viewBox="1 1 22 22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       </div>
       <div id="preset-popover" class="preset-popover">
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:8px">
@@ -1040,7 +1038,7 @@
             <div class="ab-popup-sep" style="margin:4px 0 8px"></div>
             <div style="font-size:11px;color:#6b7a94;text-align:center">
               <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span><br>
-              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.1.1
+              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.1.2
             </div>
           </div>
         </div>
@@ -2062,7 +2060,8 @@
             <div class="settings-field" style="margin-bottom:12px">
               <label class="settings-label" data-i18n="settings_themes">Themes</label>
               <select id="theme-select" class="settings-select" onchange="handleThemeChange()">
-                <option value="skyline" selected data-i18n="theme_skyline">Skyline</option>
+                <option value="jrt" selected data-i18n="theme_jrt">JRT</option>
+                <option value="skyline" data-i18n="theme_skyline">Skyline</option>
                 <option value="dark" data-i18n="theme_dark_mode">Dark Mode</option>
                 <option value="thamar-black" data-i18n="theme_thamar_black">Thamar Black</option>
                 <option value="sunset" data-i18n="theme_sunset">Sunset</option>

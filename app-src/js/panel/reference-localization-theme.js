@@ -8112,8 +8112,38 @@ isiSembulo
             root.style.setProperty('--success', '#3b9b5f');
             root.style.setProperty('--warning', '#c6862e');
             break;
+          case 'jrt':
+            // JRT theme (default) — navy & gold, matching the church logo
+            root.style.setProperty('--bg-dark', '#0d1420');
+            root.style.setProperty('--bg-panel', '#131b2c');
+            root.style.setProperty('--accent', '#cf9f3f');
+            root.style.setProperty('--accent-light', '#e3bd6b');
+            root.style.setProperty('--accent-dark', '#a67c25');
+            root.style.setProperty('--text', '#f5f1e6');
+            root.style.setProperty('--text-secondary', '#a9a496');
+            root.style.setProperty('--border', 'rgba(207, 159, 63, 0.16)');
+            root.style.setProperty('--panel-content-bg', '#1a2338');
+            root.style.setProperty('--panel-section-bg', 'linear-gradient(180deg, rgba(207, 159, 63, 0.06), rgba(207, 159, 63, 0))');
+            root.style.setProperty('--tab-active-color', '#e3bd6b');
+            root.style.setProperty('--button-border', 'rgba(207, 159, 63, 0.18)');
+            root.style.setProperty('--button-live-border', 'rgba(255, 90, 80, 0.6)');
+            root.style.setProperty('--button-shadow', 'rgba(0, 0, 0, 0.5)');
+            root.style.setProperty('--section-label-color', '#e3bd6b');
+            root.style.setProperty('--header-toolbar-bg', '#131b2c');
+            root.style.setProperty('--activity-bar-bg', 'rgba(19, 27, 44, 0.92)');
+            root.style.setProperty('--body-bg', '#0d1420');
+            root.style.setProperty('--body-radial', 'radial-gradient(1400px 800px at 5% -15%, rgba(207, 159, 63, 0.05), transparent 60%)');
+            root.style.setProperty('--studio-dock-bg', 'rgba(19, 27, 44, 0.95)');
+            root.style.setProperty('--footer-bar-bg', '#131b2c');
+            root.style.setProperty('--studio-pane-bg', 'rgba(26, 35, 56, 0.65)');
+            root.style.setProperty('--studio-pane-title-bg', 'rgba(35, 45, 68, 0.45)');
+            root.style.setProperty('--program-panel-bg', '#0d1420');
+            root.style.setProperty('--danger', '#ff5a50');
+            root.style.setProperty('--success', '#4fd18a');
+            root.style.setProperty('--warning', '#ffcf4d');
+            break;
           case 'skyline':
-            // Skyline theme (default)
+            // Skyline theme
             root.style.setProperty('--bg-dark', '#0e1117');
             root.style.setProperty('--bg-panel', '#131923');
             root.style.setProperty('--accent', '#2f6df6');

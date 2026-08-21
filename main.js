@@ -132,6 +132,20 @@ function buildAppMenu() {
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Plein écran' }
       ]
+    },
+    {
+      label: 'Paramètres',
+      submenu: [
+        {
+          label: 'Ouvrir les paramètres…',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            if (controlWindow && !controlWindow.isDestroyed()) {
+              controlWindow.webContents.executeJavaScript("openModal('settingsModal')").catch(() => {});
+            }
+          }
+        }
+      ]
     }
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));

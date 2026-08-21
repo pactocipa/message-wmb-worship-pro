@@ -1,52 +1,52 @@
     :root {
-      /* ══ Apple Design System — Dark Mode ══ */
-      --bg-dark: #000000;
-      --bg-panel: #1c1c1e;
-      --panel-content-bg: #2c2c2e;
-      --header-toolbar-bg: #1c1c1e;
-      --panel-section-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
-      /* Accent — Apple Blue */
-      --accent: #0a84ff;
-      --accent-light: #409cff;
-      --accent-dark: #0071e3;
+      /* ══ JRT Design System — Navy & Gold ══ */
+      --bg-dark: #0d1420;
+      --bg-panel: #131b2c;
+      --panel-content-bg: #1a2338;
+      --header-toolbar-bg: #131b2c;
+      --panel-section-bg: linear-gradient(180deg, rgba(207, 159, 63, 0.06), rgba(207, 159, 63, 0));
+      /* Accent — JRT Gold */
+      --accent: #cf9f3f;
+      --accent-light: #e3bd6b;
+      --accent-dark: #a67c25;
       /* Typography */
-      --text: #f5f5f7;
-      --text-secondary: #86868b;
-      --text-tertiary: #6e6e73;
+      --text: #f5f1e6;
+      --text-secondary: #a9a496;
+      --text-tertiary: #7d7969;
       /* Structure */
-      --border: rgba(255, 255, 255, 0.08);
-      --border-elevated: rgba(255, 255, 255, 0.12);
-      --tab-active-color: #0a84ff;
-      --button-border: rgba(255, 255, 255, 0.1);
-      --button-live-border: rgba(255, 69, 58, 0.6);
+      --border: rgba(207, 159, 63, 0.16);
+      --border-elevated: rgba(207, 159, 63, 0.28);
+      --tab-active-color: #e3bd6b;
+      --button-border: rgba(207, 159, 63, 0.18);
+      --button-live-border: rgba(255, 90, 80, 0.6);
       --button-shadow: rgba(0, 0, 0, 0.5);
       /* Semantic */
-      --danger: #ff453a;
-      --success: #30d158;
-      --warning: #ffd60a;
+      --danger: #ff5a50;
+      --success: #4fd18a;
+      --warning: #ffcf4d;
       --section-label-color: var(--accent);
       --settings-footer-color: var(--text-secondary);
       --settings-footer-link-color: var(--accent);
-      --header-btn-bg: rgba(255, 255, 255, 0.06);
-      --gradient-start: #000000;
-      --gradient-end: #0a0a0a;
+      --header-btn-bg: rgba(207, 159, 63, 0.08);
+      --gradient-start: #0d1420;
+      --gradient-end: #0a0f18;
       --preview-base-scale: 1;
       --settings-modal-width: 620px;
       --settings-modal-height: 90vh;
-      /* Surfaces — Apple Vibrancy Materials */
-      --activity-bar-bg: rgba(28, 28, 30, 0.92);
-      --body-bg: #000000;
-      --body-radial: radial-gradient(1400px 800px at 5% -15%, rgba(10, 132, 255, 0.04), transparent 60%);
-      --studio-dock-bg: rgba(28, 28, 30, 0.95);
-      --footer-bar-bg: #1c1c1e;
-      --studio-pane-bg: rgba(44, 44, 46, 0.65);
-      --studio-pane-title-bg: rgba(58, 58, 60, 0.45);
-      --program-panel-bg: #000000;
-      /* Apple Materials */
-      --material-chrome: rgba(30, 30, 30, 0.78);
-      --material-thin: rgba(44, 44, 46, 0.6);
-      --material-thick: rgba(28, 28, 30, 0.92);
-      --material-ultrathin: rgba(255, 255, 255, 0.03);
+      /* Surfaces */
+      --activity-bar-bg: rgba(19, 27, 44, 0.92);
+      --body-bg: #0d1420;
+      --body-radial: radial-gradient(1400px 800px at 5% -15%, rgba(207, 159, 63, 0.05), transparent 60%);
+      --studio-dock-bg: rgba(19, 27, 44, 0.95);
+      --footer-bar-bg: #131b2c;
+      --studio-pane-bg: rgba(26, 35, 56, 0.65);
+      --studio-pane-title-bg: rgba(35, 45, 68, 0.45);
+      --program-panel-bg: #0d1420;
+      /* Materials */
+      --material-chrome: rgba(19, 27, 44, 0.78);
+      --material-thin: rgba(26, 35, 56, 0.6);
+      --material-thick: rgba(19, 27, 44, 0.92);
+      --material-ultrathin: rgba(207, 159, 63, 0.03);
       /* Spacing System (4px grid) */
       --space-xs: 4px;
       --space-sm: 8px;
@@ -55,10 +55,10 @@
       --space-xl: 24px;
       --page-nav-height: 36px;
       /* Radius */
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --radius-xl: 20px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 18px;
       /* Low-latency animation tokens */
       --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.0);
       --ease-out: cubic-bezier(0.0, 0.0, 0.2, 1.0);
@@ -68,12 +68,12 @@
       --duration-normal: 250ms;
       /* Pro Mixer premium surface tokens */
       --promix-overlay-bg:
-        radial-gradient(1100px 520px at 50% 100%, rgba(10, 132, 255, 0.08), transparent 62%),
+        radial-gradient(1100px 520px at 50% 100%, rgba(207, 159, 63, 0.08), transparent 62%),
         linear-gradient(180deg, rgba(3, 6, 10, 0.36), rgba(2, 4, 8, 0.58));
       --promix-window-bg:
         linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.01) 22%),
         linear-gradient(165deg, rgba(17, 21, 28, 0.96) 0%, rgba(12, 16, 22, 0.98) 55%, rgba(10, 14, 19, 0.99) 100%);
-      --promix-window-border: rgba(195, 212, 236, 0.18);
+      --promix-window-border: rgba(207, 159, 63, 0.22);
       --promix-window-border-inner: rgba(255, 255, 255, 0.08);
       --promix-window-shadow:
         0 30px 90px rgba(0, 0, 0, 0.72),
@@ -4981,6 +4981,7 @@
       padding: 0 14px;
       background: var(--header-toolbar-bg, linear-gradient(180deg, #141a24, #101621));
       border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 0 rgba(207, 159, 63, 0.22);
       flex-shrink: 0;
       transition: background 0.25s ease;
     }
@@ -5510,13 +5511,14 @@
     }
     
     .tab.active {
-      color: #e8f0ff;
-      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      background: rgba(207, 159, 63, 0.06);
     }
-    
+
     .tab.active::after {
       width: 70%;
-      background: var(--accent-light, #4a86ff);
+      background: var(--accent-light);
+      box-shadow: 0 0 8px rgba(207, 159, 63, 0.5);
     }
 
     .search-container {
@@ -13321,7 +13323,7 @@
       width: 100%;
       height: 4px;
       border-radius: 2px;
-      background: linear-gradient(90deg, rgba(74,134,255,0.6) var(--slider-fill), transparent var(--slider-fill));
+      background: linear-gradient(90deg, var(--accent) var(--slider-fill), transparent var(--slider-fill));
       background-color: rgba(255,255,255,0.08);
     }
     
@@ -13330,7 +13332,7 @@
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      background: #cdd6e4;
+      background: #e8dcc4;
       cursor: pointer;
       border: 2px solid #1e1e2e;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -13347,7 +13349,7 @@
       width: 100%;
       height: 4px;
       border-radius: 2px;
-      background: linear-gradient(90deg, rgba(74,134,255,0.6) var(--slider-fill), transparent var(--slider-fill));
+      background: linear-gradient(90deg, var(--accent) var(--slider-fill), transparent var(--slider-fill));
       background-color: rgba(255,255,255,0.08);
     }
     
@@ -13355,7 +13357,7 @@
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      background: #cdd6e4;
+      background: #e8dcc4;
       cursor: pointer;
       border: 2px solid #1e1e2e;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
