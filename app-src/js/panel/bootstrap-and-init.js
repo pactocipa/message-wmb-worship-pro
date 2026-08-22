@@ -4561,6 +4561,13 @@
         const versions = Object.keys(bibles);
         if (versions.length > 0) activeBibleVersion = versions[0];
       }
+      // Warm up the full-text search index in the background as early as
+      // possible (chunked, never blocks) so it's very likely already ready
+      // by the time the user actually types a search — see
+      // ensureBibleSearchIndexReady in state-and-storage.js.
+      if (activeBibleVersion && typeof ensureBibleSearchIndexReady === 'function') {
+        ensureBibleSearchIndexReady(activeBibleVersion);
+      }
 
       if (appState.settings) {
         applyUiSnapshot(appState.settings);

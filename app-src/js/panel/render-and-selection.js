@@ -209,6 +209,7 @@
         return;
       }
       activeBibleVersion = ver;
+      if (typeof ensureBibleSearchIndexReady === 'function') ensureBibleSearchIndexReady(ver);
       if (dualVersionModeEnabled && dualVersionSecondaryId && activeBibleVersion && dualVersionSecondaryId === activeBibleVersion) {
         const fallbackSecondary = (previousPrimary && previousPrimary !== activeBibleVersion) ? previousPrimary : null;
         setDualVersionSecondaryId(fallbackSecondary, { silent: true });

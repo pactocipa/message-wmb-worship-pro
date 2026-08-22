@@ -143,39 +143,113 @@
     }
 
     const bibleSearchCache = new Map();
+    const bibleSearchIndexBuilds = new Map(); // versionId -> in-progress Promise
 
     function clearBibleSearchCache(versionId) {
       if (versionId) bibleSearchCache.delete(versionId);
       else bibleSearchCache.clear();
     }
 
-    function buildBibleSearchIndex(versionId) {
+    function bibleSearchIndexIdbKey(versionId) {
+      return `bsearchidx:${versionId}`;
+    }
+
+    // Builds the full-text search index (one entry per numbered paragraph) in
+    // small batches, yielding to the event loop between each — for a large
+    // sermon corpus (~230k paragraphs measured) doing this in one synchronous
+    // pass took ~22 SECONDS and froze the whole app (Chromium's "page
+    // unresponsive" territory, which read as a crash). Chunking keeps every
+    // single tick short, so the UI never locks up even though the total time
+    // is similar. The result is also persisted to IndexedDB so this cost is
+    // only ever paid once per install (or after a re-import), not on every
+    // launch — subsequent app starts just load the finished index.
+    async function buildBibleSearchIndexChunked(versionId) {
       const list = (versionId && bibles[versionId]) ? bibles[versionId] : [];
       const entries = [];
-      list.forEach((item, chapterIndex) => {
+      // Yield by accumulated PARAGRAPH count, not sermon count — sermons vary
+      // wildly in length (a few dozen to 400+ paragraphs each), so chunking by
+      // "N sermons at a time" can still add up to one giant unyielded chunk
+      // when N sermons happens to exceed the whole collection.
+      const YIELD_EVERY_ENTRIES = 3000;
+      let sinceYield = 0;
+      for (let chapterIndex = 0; chapterIndex < list.length; chapterIndex += 1) {
+        const item = list[chapterIndex];
         const extracted = extractBookAndChapter(item);
         const book = item?.book || extracted.book || '';
         const chap = item?.chapter || extracted.chap || '';
         const lines = String(item?.content || '').split('\n');
-        lines.forEach((line) => {
+        for (const line of lines) {
           const match = line.match(/^(\d+)\s+(.+)/);
-          if (!match) return;
+          if (!match) continue;
           const verse = match[1];
           const text = match[2];
           const searchText = normalizeSearchText(`${book} ${chap}:${verse} ${text}`);
           entries.push({ chapterIndex, book, chapter: chap, verse, text, searchText });
-        });
-      });
+          sinceYield += 1;
+        }
+        if (sinceYield >= YIELD_EVERY_ENTRIES) {
+          sinceYield = 0;
+          // Yield so typing/scrolling/live output stay responsive between chunks.
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
       return { entries, size: list.length };
     }
 
+    // Kicks off (or reuses) a background build for a version's search index,
+    // trying a persisted IndexedDB copy first (near-instant when present).
+    // Never throws — worst case, the index just stays empty until it's built.
+    function ensureBibleSearchIndexReady(versionId) {
+      if (!versionId) return Promise.resolve();
+      const list = bibles[versionId] || [];
+      const cached = bibleSearchCache.get(versionId);
+      if (cached && cached.size === list.length) return Promise.resolve();
+      if (bibleSearchIndexBuilds.has(versionId)) return bibleSearchIndexBuilds.get(versionId);
+
+      const promise = (async () => {
+        try {
+          const persisted = await idbGet(STORE_STATE, bibleSearchIndexIdbKey(versionId));
+          if (persisted && persisted.size === list.length && Array.isArray(persisted.entries)) {
+            bibleSearchCache.set(versionId, { entries: persisted.entries, size: persisted.size });
+            notifyBibleSearchIndexReady(versionId);
+            return;
+          }
+        } catch (e) { /* fall through to a fresh build */ }
+
+        const built = await buildBibleSearchIndexChunked(versionId);
+        bibleSearchCache.set(versionId, built);
+        notifyBibleSearchIndexReady(versionId);
+        try {
+          await idbPut(STORE_STATE, { key: bibleSearchIndexIdbKey(versionId), size: built.size, entries: built.entries });
+        } catch (e) { /* persistence is a nice-to-have, not required for correctness */ }
+      })().finally(() => bibleSearchIndexBuilds.delete(versionId));
+
+      bibleSearchIndexBuilds.set(versionId, promise);
+      return promise;
+    }
+
+    // Re-renders whatever sermon search UI is currently on screen once a
+    // background index build finishes, so a search that returned "no
+    // results" while the index was still warming self-corrects automatically
+    // instead of requiring the user to retype their query.
+    function notifyBibleSearchIndexReady(versionId) {
+      if (versionId !== activeBibleVersion) return;
+      if (sidebarTab === 'bible' && typeof renderSongs === 'function') renderSongs();
+      if (typeof refreshNavMirrorResults === 'function') refreshNavMirrorResults();
+    }
+
+    // Synchronous read used by search — returns the index immediately if
+    // it's already warm (the common case: pre-warmed at startup or persisted
+    // from a previous launch, see ensureBibleSearchIndexReady). If it isn't
+    // ready yet, this NEVER falls back to the old blocking build — it kicks
+    // off the same chunked background build and returns an empty array for
+    // this call; the UI re-renders itself the moment the build completes.
     function getBibleSearchIndex(versionId) {
       const list = (versionId && bibles[versionId]) ? bibles[versionId] : [];
       const cached = bibleSearchCache.get(versionId);
       if (cached && cached.size === list.length) return cached.entries;
-      const built = buildBibleSearchIndex(versionId);
-      bibleSearchCache.set(versionId, built);
-      return built.entries;
+      ensureBibleSearchIndexReady(versionId);
+      return [];
     }
 
     function parseBibleReferenceQuery(raw) {
