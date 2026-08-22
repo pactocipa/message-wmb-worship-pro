@@ -81,11 +81,29 @@ function importFilesIntoPanel(filePaths) {
   });
 }
 
+// Runs a snippet in the control panel's page context, wrapped so a missing
+// function (a feature not currently active, e.g. vMix mode off or the Pro
+// Mixer window not open) fails silently instead of showing an error — the
+// same guard pattern already used by the "Ouvrir les paramètres" item.
+function runInPanel(js) {
+  if (!controlWindow || controlWindow.isDestroyed()) return;
+  controlWindow.webContents.executeJavaScript(js).catch(() => {});
+}
+
+function openSettingsTab(tabId) {
+  runInPanel(`openModal('settingsModal'); if (typeof switchSettingsTab === 'function') switchSettingsTab('${tabId}');`);
+}
+
 function buildAppMenu() {
   const template = [
     {
       label: 'Fichier',
       submenu: [
+        {
+          label: 'Nouveau chant…',
+          click: () => runInPanel("if (typeof openModal === 'function') openModal('newSongModal');")
+        },
+        { type: 'separator' },
         {
           label: 'Importer des fichiers…',
           accelerator: 'CmdOrCtrl+O',
@@ -123,6 +141,52 @@ function buildAppMenu() {
     {
       label: 'Affichage',
       submenu: [
+        {
+          label: 'Démarrer la sortie',
+          click: () => runInPanel("if (typeof startOutputLive === 'function') startOutputLive();")
+        },
+        {
+          label: 'Arrêter la sortie',
+          click: () => runInPanel("if (typeof endOutputLive === 'function') endOutputLive();")
+        },
+        { type: 'separator' },
+        {
+          label: 'Grille des paragraphes (sermon)…',
+          click: () => runInPanel("if (typeof openSermonParagraphGrid === 'function') openSermonParagraphGrid();")
+        },
+        {
+          label: 'Récupération automatique des paroles…',
+          click: () => runInPanel("if (typeof openModal === 'function') openModal('autoLyricsModal');")
+        },
+        { type: 'separator' },
+        {
+          label: 'vMix',
+          submenu: [
+            { label: 'Connexion', click: () => runInPanel("if (typeof vmixConnect === 'function') vmixConnect();") },
+            { label: 'Rafraîchir', click: () => runInPanel("if (typeof vmixReconnect === 'function') vmixReconnect();") },
+            { label: 'Afficher', click: () => runInPanel("if (typeof handleVmixShowAction === 'function') handleVmixShowAction();") },
+            { label: 'Masquer', click: () => runInPanel("if (typeof handleVmixHideAction === 'function') handleVmixHideAction();") },
+            { label: "Copier l'URL", click: () => runInPanel("if (typeof copyVmixDisplayUrl === 'function') copyVmixDisplayUrl();") }
+          ]
+        },
+        {
+          label: 'Pro Mixer',
+          submenu: [
+            { label: 'Ajouter un bus', click: () => runInPanel("if (typeof _promixMenuAddBus === 'function') _promixMenuAddBus();") },
+            { label: 'FX Master…', click: () => runInPanel("if (typeof _promixMenuOpenMasterFx === 'function') _promixMenuOpenMasterFx();") },
+            { label: 'Configuration audio…', click: () => runInPanel("if (typeof _promixMenuOpenSettings === 'function') _promixMenuOpenSettings();") },
+            { type: 'separator' },
+            { label: 'Réinitialiser Solo', click: () => runInPanel("if (typeof _promixMenuResetSolo === 'function') _promixMenuResetSolo();") },
+            { label: 'Tout couper', click: () => runInPanel("if (typeof _promixMenuMuteAll === 'function') _promixMenuMuteAll();") },
+            { label: 'Tout réactiver', click: () => runInPanel("if (typeof _promixMenuUnmuteAll === 'function') _promixMenuUnmuteAll();") },
+            { label: 'Gain unitaire', click: () => runInPanel("if (typeof _promixMenuUnityGain === 'function') _promixMenuUnityGain();") }
+          ]
+        },
+        {
+          label: 'Streaming (Démarrer/Arrêter)',
+          click: () => runInPanel("if (typeof pgmStreamToggle === 'function') pgmStreamToggle();")
+        },
+        { type: 'separator' },
         { role: 'reload', label: 'Recharger' },
         { role: 'toggleDevTools', label: 'Outils de développement' },
         { type: 'separator' },
@@ -139,12 +203,13 @@ function buildAppMenu() {
         {
           label: 'Ouvrir les paramètres…',
           accelerator: 'CmdOrCtrl+,',
-          click: () => {
-            if (controlWindow && !controlWindow.isDestroyed()) {
-              controlWindow.webContents.executeJavaScript("openModal('settingsModal')").catch(() => {});
-            }
-          }
-        }
+          click: () => runInPanel("openModal('settingsModal');")
+        },
+        { type: 'separator' },
+        { label: 'Arrière-plan', click: () => openSettingsTab('background') },
+        { label: "Écran d'accueil", click: () => openSettingsTab('idlescreen') },
+        { label: 'Thèmes', click: () => openSettingsTab('themes') },
+        { label: 'À propos', click: () => openSettingsTab('about') }
       ]
     }
   ];

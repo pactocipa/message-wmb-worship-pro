@@ -96,6 +96,14 @@
       box-sizing: border-box;
     }
 
+    /* Slightly thinner, more angular icon language than the original app —
+       CSS stroke-width wins over the SVG's own stroke-width attribute. */
+    .toolbar-icon-btn svg,
+    .sm-sidebar-item svg,
+    #app-topbar svg {
+      stroke-width: 1.8;
+    }
+
     /* ══ Light Theme Mode Overrides ══ */
     [data-theme-mode="light"] .promix-window {
       border-color: rgba(0, 0, 0, 0.12);
@@ -5511,14 +5519,16 @@
     }
     
     .tab.active {
-      color: var(--text);
-      background: rgba(207, 159, 63, 0.06);
+      color: #1a1408;
+      background: linear-gradient(135deg, var(--accent-light), var(--accent));
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     }
 
     .tab.active::after {
-      width: 70%;
-      background: var(--accent-light);
-      box-shadow: 0 0 8px rgba(207, 159, 63, 0.5);
+      width: 100%;
+      left: 0;
+      transform: none;
+      background: var(--accent-dark);
     }
 
     .search-container {
@@ -11146,12 +11156,13 @@
       padding: 0;
       border-radius: var(--radius-lg);
       border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 2px solid var(--accent);
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
       overflow: hidden;
       animation: slideUp var(--duration-normal) var(--ease-spring);
       font-family: inherit;
     }
-    
+
     @keyframes slideUp {
       from { transform: translateY(16px) scale(0.97); opacity: 0; }
       to { transform: translateY(0) scale(1); opacity: 1; }
@@ -11200,27 +11211,30 @@
   padding: 9px 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
+  clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
   cursor: pointer;
   font-weight: 600;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-light), var(--accent-dark));
   color: white;
   font-size: 12px;
-  transition: background var(--duration-instant) var(--ease-out),
-              transform var(--duration-fast) var(--ease-spring);
+  transition: filter var(--duration-instant) var(--ease-out),
+              transform var(--duration-fast) var(--ease-spring),
+              box-shadow var(--duration-fast) var(--ease-out);
   letter-spacing: -0.01em;
   text-transform: none;
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   font-family: inherit;
 }
 
 .btn:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.08);
   transform: none;
-  box-shadow: none;
+  box-shadow: 0 0 14px rgba(207, 159, 63, 0.35);
 }
-    
+
     .btn:active {
       transform: scale(0.97);
+      filter: brightness(0.95);
     }
     
 .btn-live {
@@ -12484,9 +12498,9 @@
     }
     
     .settings-input:focus, .settings-select:focus {
-      border-color: rgba(74,134,255,0.5);
+      border-color: rgba(207,159,63,0.5);
       outline: none;
-      box-shadow: 0 0 0 2px rgba(74,134,255,0.15);
+      box-shadow: 0 0 0 2px rgba(207,159,63,0.15);
       background: rgba(255,255,255,0.07);
     }
     
@@ -16550,14 +16564,14 @@
 
     /* Selection color */
     ::selection {
-      background: rgba(10, 132, 255, 0.3);
+      background: rgba(207, 159, 63, 0.3);
       color: inherit;
     }
 
-    /* Focus-visible for keyboard nav — Apple ring */
+    /* Focus-visible for keyboard nav — JRT gold ring */
     :focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.4);
+      box-shadow: 0 0 0 3px rgba(207, 159, 63, 0.4);
       border-radius: var(--radius-sm);
     }
 
