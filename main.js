@@ -109,9 +109,15 @@ function buildAppMenu() {
           accelerator: 'CmdOrCtrl+O',
           click: async () => {
             const result = await dialog.showOpenDialog(controlWindow, {
-              title: 'Importer des sermons ou des chansons',
+              title: 'Importer des sermons, chansons ou une bible',
               properties: ['openFile', 'multiSelections'],
-              filters: [{ name: 'Fichiers JSON', extensions: ['json'] }]
+              filters: [
+                { name: 'Tous les fichiers pris en charge', extensions: ['json', 'xml', 'pdf'] },
+                { name: 'Fichiers JSON', extensions: ['json'] },
+                { name: 'Bible XML', extensions: ['xml'] },
+                { name: 'PDF', extensions: ['pdf'] },
+                { name: 'Tous les fichiers', extensions: ['*'] }
+              ]
             });
             if (!result.canceled && result.filePaths.length) {
               importFilesIntoPanel(result.filePaths);

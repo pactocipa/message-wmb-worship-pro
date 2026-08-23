@@ -1099,9 +1099,58 @@
     // process — reuses the exact same recognized-format import path as
     // drag-and-drop, just triggered from the menu bar instead.
     function importFileFromMenu(fileName, text) {
+      if (fileName.toLowerCase().endsWith('.xml')) {
+        importBibleXmlFromMenu(fileName, text);
+        return;
+      }
       const handled = importBulkJsonText(text);
       if (!handled) {
         showToast(`Fichier "${fileName}" non reconnu (format attendu : collection de sermons ou de chansons).`);
+      }
+    }
+
+    // Same XML Bible parsing as handleImport()'s file-input path, adapted for
+    // the native File menu which hands over (fileName, text) instead of a
+    // File object — see triggerImport()/handleImport() for the drag-and-drop
+    // / toolbar-button equivalent.
+    async function importBibleXmlFromMenu(fileName, text) {
+      try {
+        const xml = new DOMParser().parseFromString(text, "text/xml");
+        const bibleRoot = xml.querySelector('bible');
+        const xmlBibleRoot = xml.querySelector('XMLBIBLE') || xml.querySelector('xmlbible');
+        const verName = bibleRoot?.getAttribute('translation') ||
+                       bibleRoot?.getAttribute('name') ||
+                       bibleRoot?.getAttribute('n') ||
+                       xmlBibleRoot?.getAttribute('biblename') ||
+                       xmlBibleRoot?.getAttribute('name') ||
+                       fileName.split('.')[0].toUpperCase();
+        const parsed = parseBible(xml, verName);
+        const persistAndFinish = async (isNew) => {
+          bibles[verName] = parsed;
+          clearBibleSearchCache(verName);
+          if (!activeBibleVersion || !bibles[activeBibleVersion]) activeBibleVersion = verName;
+          saveState();
+          renderVersionBar();
+          updateBibleLists();
+          renderSongs();
+          ensureSelectionFallback();
+          saveToStorageDebounced();
+          try {
+            await idbPut(STORE_BIBLES, buildBibleRecord(verName, parsed, { isNew }));
+            showToast(t('bible_version_imported'));
+          } catch (e) {
+            console.error('Bible import persist failed', e);
+            showToast(t('bible_import_persist_failed'));
+          }
+        };
+        if (bibles[verName]) {
+          showConfirm('Version Exists', `Version "${verName}" already exists. Replace?`, () => persistAndFinish(false));
+        } else {
+          await persistAndFinish(true);
+        }
+      } catch (e) {
+        console.error('Bible XML import failed', e);
+        showToast(t('import_failed'));
       }
     }
 
