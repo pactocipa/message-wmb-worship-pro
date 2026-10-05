@@ -363,6 +363,29 @@
             </div>
           </div>
         </div>
+        <div id="obs-ws-status-panel" style="display:none;border-top:1px solid var(--border);padding-top:12px;margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto">
+              <button class="btn" id="btn-obs-ws-panel-toggle" type="button" onclick="toggleObsWsStatusPanel()" style="min-width:28px;padding:0 8px;font-weight:700">v</button>
+              <strong style="font-size:12px;white-space:nowrap">OBS WebSocket</strong>
+              <span id="obs-ws-status-summary" style="font-size:11px;color:var(--text-secondary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">OBS WebSocket disabled</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" id="btn-obs-ws-connect" type="button" onclick="handleObsWsConnectAction()" style="min-height:34px;padding:0 12px;font-size:12px">Connect</button>
+              <button class="btn" id="btn-obs-ws-refresh-scenes" type="button" onclick="handleObsWsRefreshScenesAction()" style="min-height:34px;padding:0 12px;font-size:12px">Refresh Scenes</button>
+            </div>
+          </div>
+          <div id="obs-ws-status-body" style="display:flex;gap:12px;align-items:flex-start;margin-top:10px;flex-wrap:wrap;min-width:0">
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:220px;flex:0 1 320px">
+              <strong id="obs-ws-connection-label" style="font-size:12px">OBS WebSocket disabled</strong>
+              <span id="obs-ws-current-scene-label" style="font-size:11px;color:var(--text-secondary)">Current scene: -</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex:1 1 420px;min-width:260px">
+              <select id="obs-ws-manual-scene" class="settings-select" style="flex:1 1 auto;min-width:0"></select>
+              <button class="btn" type="button" onclick="handleObsWsSwitchSceneAction()" style="flex:0 0 auto;white-space:nowrap;min-height:34px;padding:0 12px;font-size:12px">Switch Now</button>
+            </div>
+          </div>
+        </div>
         <div class="main-panel-stacks" style="display:flex;justify-content:space-between;align-items:flex-start;border-top:1px solid var(--border);padding-top:16px;flex-wrap:wrap;gap:8px">
           <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:100px">
             <span style="font-size:11px;color:var(--text-secondary)"><span data-i18n="common_lines">Lines</span></span>
@@ -1038,7 +1061,7 @@
             <div class="ab-popup-sep" style="margin:4px 0 8px"></div>
             <div style="font-size:11px;color:#6b7a94;text-align:center">
               <span class="settings-footer-plugin">Message WMB Worship <span class="settings-footer-pro">Pro</span></span><br>
-              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.2.2
+              Multimédia Jésus Le Roc Tabernacle de Kananga • v2.3.0
             </div>
           </div>
         </div>
@@ -1352,9 +1375,9 @@
         <div class="slider-container" style="margin-top:12px">
           <div class="slider-header">
             <label class="settings-label">LT Width</label>
-            <span class="slider-value" id="lt-width-pct-value">78%</span>
+            <span class="slider-value" id="lt-width-pct-value">90%</span>
           </div>
-          <input type="range" id="lt-width-pct" min="50" max="100" step="1" value="78" class="settings-slider" oninput="updateSliderValue(this,'%');onAnyControlChange()">
+          <input type="range" id="lt-width-pct" min="50" max="100" step="1" value="90" class="settings-slider" oninput="updateSliderValue(this,'%');onAnyControlChange()">
         </div>
         <div class="slider-container" style="margin-top:12px">
           <div class="slider-header">
@@ -2031,6 +2054,79 @@
                   <input type="checkbox" id="vmix-reconnect-startup">
                 </label>
               </div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:10px;margin-top:12px">
+              <label class="mini-toggle" style="width:100%;justify-content:space-between">
+                <span>Enable OBS WebSocket Control</span>
+                <input type="checkbox" id="obs-ws-enable">
+              </label>
+              <div style="font-size:11px;color:var(--text-secondary)">
+                In OBS: Tools -&gt; WebSocket Server Settings (built into OBS 28+). Independent of the Browser Source used to display content — works alongside it, same PC or a different one.
+              </div>
+              <div class="settings-row" style="margin-bottom:0">
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">OBS Host</label>
+                  <input type="text" id="obs-ws-host" class="settings-input" placeholder="127.0.0.1">
+                </div>
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">Port</label>
+                  <input type="number" id="obs-ws-port" class="settings-input" min="1" max="65535" placeholder="4455">
+                </div>
+              </div>
+              <div class="settings-field" style="margin-bottom:0">
+                <label class="settings-label">Password</label>
+                <input type="password" id="obs-ws-password" class="settings-input" placeholder="Optional">
+              </div>
+              <div class="settings-row" style="margin-bottom:0">
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">Scene On Project Live</label>
+                  <select id="obs-ws-live-scene" class="settings-select"></select>
+                </div>
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">Scene On Clear</label>
+                  <select id="obs-ws-clear-scene" class="settings-select"></select>
+                </div>
+              </div>
+              <div class="settings-row" style="margin-bottom:0">
+                <label class="mini-toggle" style="width:100%;justify-content:space-between">
+                  <span>Auto Switch On Project</span>
+                  <input type="checkbox" id="obs-ws-auto-live">
+                </label>
+                <label class="mini-toggle" style="width:100%;justify-content:space-between">
+                  <span>Auto Switch On Clear</span>
+                  <input type="checkbox" id="obs-ws-auto-clear">
+                </label>
+              </div>
+            </div>
+            <div id="ndi-output-panel" style="display:none;border:1px solid var(--border);border-radius:10px;padding:12px;background:rgba(255,255,255,0.02);flex-direction:column;gap:10px;margin-top:12px">
+              <label class="mini-toggle" style="width:100%;justify-content:space-between">
+                <span>Enable NDI Output</span>
+                <input type="checkbox" id="ndi-enable">
+              </label>
+              <div style="font-size:11px;color:var(--text-secondary)">
+                Alternative to a Browser Source/Input URL: streams this app's display as a standard NDI video source that OBS or vMix (native NDI support) can pick up directly, same PC or a different one on the network. Video only, no audio. Check with OBS/vMix's NDI source list, or the free "NDI Studio Monitor" tool, to confirm it appears.
+              </div>
+              <div class="settings-field" style="margin-bottom:0">
+                <label class="settings-label">Source Name</label>
+                <input type="text" id="ndi-name" class="settings-input" placeholder="Message WMB Worship Pro">
+              </div>
+              <div class="settings-row" style="margin-bottom:0">
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">Width</label>
+                  <input type="number" id="ndi-width" class="settings-input" min="320" max="7680" placeholder="1920">
+                </div>
+                <div class="settings-field" style="margin-bottom:0">
+                  <label class="settings-label">Height</label>
+                  <input type="number" id="ndi-height" class="settings-input" min="240" max="4320" placeholder="1080">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+                <div id="ndi-status-label" style="font-size:12px">NDI output disabled</div>
+                <button class="btn" id="btn-ndi-apply" type="button" style="min-height:30px;padding:0 12px;font-size:12px">Apply</button>
+              </div>
+            </div>
+            <div id="ndi-unavailable-note" style="display:none;font-size:11px;color:var(--text-secondary);margin-top:8px">
+              NDI output is only available in the Message WMB Worship Pro desktop app, not when this panel is run as a plain OBS browser dock.
             </div>
             <div class="settings-field" style="margin-bottom:12px">
               <button class="btn" style="width:100%;" onclick="promptSavePreset()">💾 <span data-i18n="settings_save_preset">Save Current as Preset</span></button>
@@ -3306,6 +3402,8 @@
   <script src="js/panel/panel-app-core.js"></script>
   <script src="js/panel/reference-localization-theme.js"></script>
   <script src="js/panel/vmix-and-translation.js"></script>
+  <script src="js/panel/obs-websocket.js"></script>
+  <script src="js/panel/ndi-output.js"></script>
   <script src="js/panel/songs-and-bible.js"></script>
   <script src="js/panel/render-and-selection.js"></script>
   <script src="js/panel/media-and-background.js"></script>

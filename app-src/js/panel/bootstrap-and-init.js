@@ -44,7 +44,9 @@
         },
         host: {
           mode: HOST_MODE_OBS,
-          vmix: { ...vmixState }
+          vmix: { ...vmixState },
+          obsWs: { ...obsWsState },
+          ndi: { ...ndiState }
         }
       };
     }
@@ -152,7 +154,9 @@
         },
         host: {
           mode: getHostMode(),
-          vmix: getVmixSettings()
+          vmix: getVmixSettings(),
+          obsWs: getObsWsSettings(),
+          ndi: getNdiSettings()
         }
       };
     }
@@ -1165,6 +1169,8 @@
       updateRemoteShowDetails();
       connectRelay();
       restoreVmixSettingsUi();
+      restoreObsWsSettingsUi();
+      restoreNdiSettingsUi();
       applyHostModeUi();
       handleDualFontOverrideState({ suppressLiveUpdate: true });
       syncBgOpacitySlider();
@@ -4455,9 +4461,17 @@
       appState = mergeAppStateWithDefaults(stateValue || {});
       const persistedHostMode = stateValue?.host?.mode || (appState.settings && appState.settings.hostMode) || HOST_MODE_OBS;
       const persistedVmix = stateValue?.host?.vmix || (appState.settings && appState.settings.vmix) || null;
+      const persistedObsWs = stateValue?.host?.obsWs || null;
+      const persistedNdi = stateValue?.host?.ndi || null;
       setHostMode(persistedHostMode, { silent: true });
       if (persistedVmix && typeof persistedVmix === 'object') {
         updateVmixSettings(persistedVmix, { silent: true });
+      }
+      if (persistedObsWs && typeof persistedObsWs === 'object') {
+        updateObsWsSettings(persistedObsWs, { silent: true });
+      }
+      if (persistedNdi && typeof persistedNdi === 'object') {
+        updateNdiSettings(persistedNdi, { silent: true });
       }
       let localPreferredLanguage = '';
       try { localPreferredLanguage = localStorage.getItem('bible_app_language') || ''; } catch (_) {}
@@ -4581,6 +4595,8 @@
         if (refInput) refInput.value = String(ltRefFontSize);
       }
       restoreVmixSettingsUi();
+      restoreObsWsSettingsUi();
+      restoreNdiSettingsUi();
       applyHostModeUi();
 
       handleBgTypeChange();
@@ -4889,6 +4905,12 @@
       if (isVmixMode() && vmixState.enabled && vmixState.reconnectOnStartup !== false) {
         vmixReconnect().catch(() => {});
       }
+      if (obsWsState.enabled) {
+        obsWsConnect();
+      }
+      if (ndiState.enabled) {
+        applyNdiRuntimeState();
+      }
     }
 
     function applyObsCompatibilityUi() {
@@ -4924,10 +4946,14 @@
       initStandaloneTools();
       _restoreAudioBufferSizeSetting();
       bindVmixSettingsInputs();
+      bindObsWsSettingsInputs();
+      bindNdiSettingsInputs();
       applyObsCompatibilityUi();
       // Ensure CSS vars match the currently selected theme on cold startup.
       handleThemeChange();
       restoreVmixSettingsUi();
+      restoreObsWsSettingsUi();
+      restoreNdiSettingsUi();
       applyHostModeUi();
       refreshLocalServerInfo().catch(() => {});
       // Preload camera/audio device lists so source properties open instantly.

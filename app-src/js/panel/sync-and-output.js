@@ -1934,6 +1934,10 @@
         const isSermonRef = !!(bibleVersionMeta[liveItem.version] && bibleVersionMeta[liveItem.version].collectionType === 'sermon');
         const verText = (showVersion && bibleVer && !isSermonRef) ? ` (${bibleVer})` : "";
         const referenceLabel = `${bibleRef}${verText}`;
+        // Same reasoning as songReferenceLabel below: Lower Third is meant to
+        // show only the live content, never a title/reference badge on top
+        // of it — mirrors the fix already applied to songs.
+        const ltReferenceLabel = '';
         const ltRefSize = ltRefFontSize || refFontSize;
         const allowLtRefBg = true;
         const ltRefAlignValue = (ltHAlignBible === 'justify')
@@ -1957,19 +1961,26 @@
         } else if (useCustomStyle) {
           primarySegment = `<div class="jo-body" style="padding-left:60px;${verseShadowStyle}">${verseHtml}</div>`;
         } else {
-          primarySegment = buildLtBibleSegment({
-            referenceLabel,
-            verseHtml,
-            refSize: ltRefSize,
-            refColor,
-            refBgColor,
-            alignValue: ltRefAlignValue,
-            verseShadowStyle,
-            allowBackground: allowLtRefBg,
-            padding: '3px 16px',
-            borderRadius: '5px',
-            refTextTransform: activeLtRefTextTransform
-          });
+          // Skip buildLtBibleSegment()'s ref-line wrapper entirely when
+          // there's no label to show — it renders a styled (background+
+          // padding) badge span unconditionally, so passing an empty label
+          // would still draw an empty colored bar. Same pattern already
+          // used for songs below (outHtml = songReferenceLabel ? ... : ...).
+          primarySegment = ltReferenceLabel
+            ? buildLtBibleSegment({
+              referenceLabel: ltReferenceLabel,
+              verseHtml,
+              refSize: ltRefSize,
+              refColor,
+              refBgColor,
+              alignValue: ltRefAlignValue,
+              verseShadowStyle,
+              allowBackground: allowLtRefBg,
+              padding: '3px 16px',
+              borderRadius: '5px',
+              refTextTransform: activeLtRefTextTransform
+            })
+            : `<div class="jo-body" style="${verseShadowStyle}">${verseHtml}</div>`;
         }
         outHtml = primarySegment;
       } else {
@@ -2042,19 +2053,9 @@
               refPosition: refPositionFull,
               refTextTransform: activeFullRefTextTransform
             })
-            : buildLtBibleSegment({
-              referenceLabel: secondaryLabel,
-              verseHtml: secondaryText,
-              refSize: ltRefSize,
-              refColor,
-              refBgColor,
-              alignValue: ltRefAlignValue,
-              verseShadowStyle,
-              allowBackground: allowLtRefBg,
-              padding: '3px 16px',
-              borderRadius: '5px',
-              refTextTransform: activeLtRefTextTransform
-            });
+            // Skip the ref-line wrapper entirely (see the primary-segment
+            // comment above) so no empty colored badge bar is drawn.
+            : `<div class="jo-body" style="${verseShadowStyle}">${secondaryText}</div>`;
         } else {
           const secondaryList = bibles[dualVersionSecondaryId];
           const chapterIndexForSecondary = getDualBibleChapterIndex(liveItem, livePointer);
@@ -2088,19 +2089,9 @@
                   refPosition: refPositionFull,
                   refTextTransform: activeFullRefTextTransform
                 })
-                : buildLtBibleSegment({
-                  referenceLabel: secondaryLabel,
-                  verseHtml: secondText,
-                  refSize: ltRefSize,
-                  refColor,
-                  refBgColor,
-                  alignValue: ltRefAlignValue,
-                  verseShadowStyle,
-                  allowBackground: allowLtRefBg,
-                  padding: '3px 16px',
-                  borderRadius: '5px',
-                  refTextTransform: activeLtRefTextTransform
-                });
+                // Skip the ref-line wrapper entirely (see the primary-segment
+                // comment above) so no empty colored badge bar is drawn.
+                : `<div class="jo-body" style="${verseShadowStyle}">${secondText}</div>`;
             }
           }
         }
@@ -2161,7 +2152,11 @@
         bibleRef: livePointer.kind === 'bible' ? getBibleRefForPage(liveItem, p.raw, p.verseCount) : '',
         bibleVersion: (showVersion && livePointer.kind === 'bible') ? bibleVer : '',
         verseCount: p.verseCount || 0,
-        lineCount: (p.raw || "").split('\n').length,
+        // p.lineCount (set by the sermon/bible long-paragraph chunking path
+        // in getPagesFromItem(), songs-and-bible.js) is the true wrapped
+        // visual line count for that chunk. Everything else still joins its
+        // lines with '\n' in raw, so counting newlines remains correct there.
+        lineCount: p.lineCount || (p.raw || "").split('\n').length,
         autoAdjustLtHeight: autoAdjustLtHeight,
         hAlignFull: fullHAlign,
         vAlignFull: fullVAlign,

@@ -23,6 +23,9 @@
           updateVmixStatusUi();
         });
       }
+      if (obsWsState.enabled) {
+        obsWsAfterClear().catch(() => {});
+      }
     }
     
     function clearSearch() {

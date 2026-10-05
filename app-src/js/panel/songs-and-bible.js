@@ -216,9 +216,9 @@
       if (!raw) return null;
       const lines = String(raw).split('\n');
       for (const line of lines) {
-        const normalized = line.replace(/^\uFEFF/, '').trimStart();
-        const match = normalized.match(/^(\d+)\b/);
-        if (match) return match[1];
+        const normalized = line.replace(/^\uFEFF/, '').trim();
+        const match = matchParagraphLine(normalized);
+        if (match) return String(match.num);
       }
       return null;
     }
@@ -308,7 +308,8 @@
               ltFontBible,
               document.getElementById('font-family')?.value || '',
               document.getElementById('font-weight')?.value || '',
-              document.getElementById('pad-lr-lt')?.value || ''
+              document.getElementById('pad-lr-lt')?.value || '',
+              document.getElementById('lt-width-pct')?.value || ''
             ].join(',')
           : '';
         return [
@@ -501,7 +502,28 @@
         const wrapFontWeight = document.getElementById('font-weight')?.value || '700';
         const wrapBaseWidth = (styleCanvasBaseSize && styleCanvasBaseSize.width) ? styleCanvasBaseSize.width : 1920;
         const wrapPadPct = Math.max(0, Math.min(45, Number(document.getElementById('pad-lr-lt')?.value) || 5));
-        const wrapTextWidthPx = Math.max(240, (wrapBaseWidth * (1 - 2 * (wrapPadPct / 100))) - 20);
+        // Lower Third's content box is also narrowed by the "LT content
+        // width" setting (applyLtContentWidth() in BSP_display.html, which
+        // sets the text box to this percentage of its container) — without
+        // this, a sermon/bible paragraph was wrapped as if it had the full
+        // padded canvas width available even when the user narrowed the LT
+        // box below 100%, which could overflow/under-wrap the actual
+        // on-screen box.
+        const wrapLtWidthPct = Math.max(50, Math.min(100, Number(document.getElementById('lt-width-pct')?.value) || 100));
+        // Measured empirically against the real rendered Lower Third box:
+        // wrapping was leaving a visible strip of unused background on the
+        // right of every line, i.e. this calculation was under-estimating
+        // how much actually fits. Most likely cause: ctx.font here uses the
+        // selected web font (e.g. Montserrat) by name, but canvas measureText
+        // silently falls back to a wider system font until that font file has
+        // actually finished loading (a known browser race — there's no
+        // document.fonts.ready wait before this runs) — any mismatch between
+        // the measuring font and the real rendered one makes this
+        // systematically too conservative, never too generous. WRAP_FUDGE
+        // compensates; raise it further if lines still wrap short, lower it
+        // if text ever starts overflowing the box instead.
+        const WRAP_FUDGE = 1.18;
+        const wrapTextWidthPx = Math.max(240, (wrapBaseWidth * (1 - 2 * (wrapPadPct / 100))) * (wrapLtWidthPct / 100) * WRAP_FUDGE);
 
         const pushVerseGroupPages = (slice) => {
           if (!slice || !slice.length) return;
@@ -514,13 +536,22 @@
             const chunkSize = Math.max(1, effectiveLinesPerPage);
             if (wrapped.length > chunkSize) {
               for (let i = 0; i < wrapped.length; i += chunkSize) {
-                const chunkRaw = `${verseNum} ${wrapped.slice(i, i + chunkSize).join(' ')}`;
+                const chunkWrappedLines = wrapped.slice(i, i + chunkSize);
+                const chunkRaw = `${verseNum} ${chunkWrappedLines.join(' ')}`;
                 pages.push({
                   text: combineVersesIntoFlow([chunkRaw]),
                   raw: chunkRaw,
                   tag,
                   verseCount: 1,
-                  startVerse: verseNum
+                  startVerse: verseNum,
+                  // chunkRaw joins wrapped lines with spaces (not '\n'), so
+                  // the usual "count newlines in raw" heuristic used for
+                  // Lower Third auto-height (see lineCount in
+                  // sync-and-output.js) can't see how many visual lines this
+                  // page actually wraps to — carry the real count explicitly
+                  // instead, or the LT box is sized as if this were always a
+                  // single line and clips/overflows taller chunks.
+                  lineCount: chunkWrappedLines.length
                 });
               }
               return;
@@ -1365,6 +1396,9 @@
           vmixLastError = error && error.message ? error.message : 'vMix update failed';
           updateVmixStatusUi();
         });
+      }
+      if (obsWsState.enabled) {
+        obsWsAfterProjectLive().catch(() => {});
       }
       if (!isBible && sidebarTab === 'songs') {
         preserveLtBgWhenSwitchingToSongs = false;

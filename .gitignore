@@ -8,3 +8,4 @@ test-fresh-profile/
 # still picks it up from disk (see README.md "Mettre a jour les donnees
 # prechargees").
 app-src/bundled-data/sermons.json
+app-src/bundled-data/sermons.json.bak*

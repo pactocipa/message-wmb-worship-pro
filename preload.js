@@ -7,6 +7,13 @@ const { pathToFileURL } = require('url');
 // safe; those calls simply fall back to their existing browser-only behavior).
 contextBridge.exposeInMainWorld('BSPDesktop', {
   getDisplays: () => ipcRenderer.invoke('bsp:getDisplays'),
+  // LAN IP(s) + HTTP/relay ports this desktop shell is actually listening on
+  // (see http-server.js/relay-server.js, started in main.js). Lets the panel
+  // build a working OBS Browser Source / vMix Input URL for a device on a
+  // different computer instead of requiring the user to find their own IP —
+  // see getVmixDisplayUrl()/refreshLocalServerInfo() in
+  // js/panel/vmix-and-translation.js, which already expects this method.
+  getLocalServerInfo: () => ipcRenderer.invoke('bsp:getLocalServerInfo'),
   openOutput: (params) => ipcRenderer.invoke('bsp:openOutput', params),
   closeOutput: () => ipcRenderer.invoke('bsp:closeOutput'),
   isOutputOpen: () => ipcRenderer.invoke('bsp:isOutputOpen'),
@@ -57,5 +64,18 @@ contextBridge.exposeInMainWorld('BSPDesktop', {
   installUpdateNow: () => ipcRenderer.invoke('bsp:installUpdateNow'),
   onUpdateStatus: (callback) => {
     ipcRenderer.on('bsp:updateStatus', (event, payload) => callback(payload));
+  },
+  // NDI output (see main.js) — runs an offscreen copy of the display page and
+  // streams it as a standard NDI video source, picked up by OBS/vMix like any
+  // other NDI source, same PC or a different one. Only available in this
+  // desktop shell (grandi/NDI must run in the main process, never a renderer).
+  ndiStart: (opts) => ipcRenderer.invoke('bsp:ndiStart', opts),
+  ndiStop: () => ipcRenderer.invoke('bsp:ndiStop'),
+  ndiGetStatus: () => ipcRenderer.invoke('bsp:ndiGetStatus'),
+  // Pushed by main.js whenever NDI actually starts/stops, including an
+  // unexpected stop (e.g. the offscreen window's renderer crashing) that the
+  // renderer could otherwise only learn about by polling ndiGetStatus().
+  onNdiStatusChanged: (callback) => {
+    ipcRenderer.on('bsp:ndiStatusChanged', (event, payload) => callback(payload));
   }
 });

@@ -794,7 +794,11 @@
     function applyBibleLtLayout(d, ltHeight, anchorMode) {
       const isTopAnchor = anchorMode === 'top';
       const padLR = Math.max(0, d.padLRLT ?? d.padLR ?? 0);
-      const bodyInset = 'clamp(24px, 2vw, 40px)';
+      // Previously a second, fixed inset stacked on top of padLR (the
+      // user-adjustable "Padding LR" setting), so text always sat well
+      // short of the box edges no matter how low padLR was set. padLR
+      // alone is the single, user-controllable left/right inset now.
+      const bodyInset = '0px';
       const hAlignLT = d.hAlignLTBible || 'left';
       const vAlignLT = d.vAlignLTBible || 'middle';
       const verseAlign = d.hAlignLTBibleVerse || hAlignLT;
@@ -825,6 +829,47 @@
         bodyEl.style.textAlign = (verseAlign === 'justify') ? 'justify' : verseAlign;
         bodyEl.style.alignSelf = (verseAlign === 'left') ? 'flex-start' : (verseAlign === 'right') ? 'flex-end' : (verseAlign === 'justify' ? 'stretch' : 'center');
       });
+
+      // Auto-fit the box to the ACTUAL rendered text, same principle as
+      // applySongLtVerticalLayout()'s height measurement — but here applied
+      // to both width and height, since text-container (#text-container,
+      // elements.txt) and the background layer (#lt-bg-wrap/#lt-bg-inner,
+      // elements.ltWrap/ltInner) are independent sibling elements, not
+      // parent/child, so neither can use plain CSS fit-content to track the
+      // other: this has to be measured and mirrored over explicitly.
+      // applyLtContentWidth()/computeLtHeight() already applied the
+      // configured max width/height just above — this only SHRINKS the box
+      // down to the real content when that's smaller, it never grows past
+      // those caps (same "fit under a max" behavior as the existing height
+      // logic already has).
+      if (d.autoAdjustLtHeight) {
+        const maxWidthPx = elements.txt.getBoundingClientRect().width;
+        const maxHeightPx = elements.txt.getBoundingClientRect().height;
+        // .jo-body is forced to width:100% above so it fills whatever box
+        // elements.txt ends up with — but that's exactly what breaks
+        // fit-content measurement: a 100%-wide child makes the fit-content
+        // container's natural size circular/ambiguous, so it can resolve
+        // narrower than the text's real one-line width, wrapping text onto
+        // an extra line it didn't need. Let children size to their own
+        // natural content width just for this measurement pass.
+        bodyEls.forEach(bodyEl => { bodyEl.style.width = 'max-content'; bodyEl.style.maxWidth = `${maxWidthPx}px`; });
+        refEls.forEach(refEl => { refEl.style.width = 'max-content'; refEl.style.maxWidth = `${maxWidthPx}px`; });
+        elements.txt.style.width = 'fit-content';
+        elements.txt.style.height = 'auto';
+        elements.txt.style.overflow = 'visible';
+        const fitWidthPx = Math.min(maxWidthPx, elements.txt.scrollWidth || maxWidthPx);
+        const fitHeightPx = Math.min(maxHeightPx, elements.txt.scrollHeight || maxHeightPx);
+        elements.txt.style.width = `${fitWidthPx}px`;
+        elements.txt.style.height = `${fitHeightPx}px`;
+        elements.txt.style.overflow = 'hidden';
+        // elements.txt now has a fixed, correctly-measured pixel width — safe
+        // to let the children fill it again (100%), no more circularity.
+        bodyEls.forEach(bodyEl => { bodyEl.style.width = '100%'; bodyEl.style.maxWidth = 'none'; });
+        refEls.forEach(refEl => { refEl.style.width = 'auto'; refEl.style.maxWidth = 'none'; });
+        elements.ltWrap.style.width = `${fitWidthPx}px`;
+        elements.ltWrap.style.maxWidth = `${fitWidthPx}px`;
+        elements.ltWrap.style.height = `${fitHeightPx}px`;
+      }
     }
 
     function applyLtAnchorMode(anchorMode) {

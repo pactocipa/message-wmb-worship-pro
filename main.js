@@ -1,8 +1,10 @@
 const { app, BrowserWindow, screen, ipcMain, shell, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { pathToFileURL } = require('url');
 const { createRelayServer } = require('./relay-server');
+const { createStaticServer } = require('./http-server');
 const { autoUpdater } = require('electron-updater');
 
 // An uncaught exception or unhandled promise rejection in the main process
@@ -25,7 +27,12 @@ process.on('unhandledRejection', (reason) => {
 // file:// URL, so simply having a server listening here is enough; no other
 // wiring is needed for panel <-> OBS-Browser-Source sync to start working.
 const RELAY_PORT = 5511;
+// Matches REMOTE_SHOW_DEFAULT_PORT in app-src/js/panel/panel-app-core.js —
+// the renderer's getHttpPort()/buildRemoteShowUrl()/getVmixDisplayUrl() all
+// already assume a plain HTTP server answers here (see http-server.js).
+const HTTP_PORT = 5510;
 let relayServerHandle = null;
+let httpServerHandle = null;
 
 // app-src/ is a read-only COPY of the existing Bible Song Pro OBS project
 // (copied once at setup, never the original files) — this desktop shell never
@@ -274,6 +281,34 @@ function processControlRelayQueue() {
   });
 }
 
+// Reachable LAN addresses for this PC, used by the renderer (getVmixDisplayUrl(),
+// updateRemoteShowDetails()) to build a working OBS Browser Source / vMix Input
+// URL for a device on a DIFFERENT computer instead of leaving the user to find
+// their own IP. IPv4 only; loopback is always appended last as the same-PC
+// fallback, so a genuine LAN address is preferred whenever one exists.
+function getLocalServerInfo() {
+  const hosts = [];
+  try {
+    const interfaces = os.networkInterfaces();
+    Object.values(interfaces).forEach((entries) => {
+      (entries || []).forEach((entry) => {
+        if (entry.family === 'IPv4' && !entry.internal && !hosts.includes(entry.address)) {
+          hosts.push(entry.address);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('[main] getLocalServerInfo: could not read network interfaces', err);
+  }
+  hosts.push('127.0.0.1');
+  return {
+    httpPort: HTTP_PORT,
+    relayPort: RELAY_PORT,
+    preferredHost: hosts[0],
+    availableHosts: hosts
+  };
+}
+
 function describeDisplay(d, idx, primaryId) {
   return {
     id: String(d.id),
@@ -480,7 +515,231 @@ function createOutputWindow(targetDisplay, opts = {}) {
   return outputWindow;
 }
 
+// --- NDI output (optional alternative to an OBS Browser Source / vMix
+// Browser Input) ---
+// Runs an offscreen copy of the display page and streams its rendered
+// frames as a standard NDI video source on the network — OBS and vMix
+// (which has native NDI support) can pick it up directly, same PC or a
+// different one, with no Browser Source/Input URL to configure. Video
+// only, no audio: Electron has no simple API to capture audio from an
+// offscreen window, and the service's program audio normally comes from
+// the audio desk, not from this app.
+//
+// Must run in THIS main process, never the renderer — grandi is a native
+// Node-API addon (see node_modules/grandi's "Electron and bundlers" guide:
+// "Do not import Grandi into a renderer or browser bundle").
+let grandiModule = null;
+let grandiInitialized = false;
+let ndiWindow = null;
+let ndiSender = null;
+let ndiPaintHandler = null;
+let ndiHeartbeatTimer = null;
+let ndiLastFrame = null;
+
+// Serializes start/stop (and the cleanup from an unexpected window close) so
+// two overlapping requests — e.g. the enable checkbox toggled twice in quick
+// succession before the first IPC round-trip resolves — can never interleave
+// and leak a duplicate offscreen window/NDI sender. Each queued op still
+// returns its own settled result to its caller; ndiOpChain only tracks
+// ordering and is never allowed to stay rejected (that would permanently
+// wedge every later queued op behind it).
+let ndiOpChain = Promise.resolve();
+function queueNdiOp(fn) {
+  const run = ndiOpChain.then(fn, fn);
+  ndiOpChain = run.then(() => {}, () => {});
+  return run;
+}
+
+function notifyNdiStatusChanged() {
+  if (controlWindow && !controlWindow.isDestroyed()) {
+    controlWindow.webContents.send('bsp:ndiStatusChanged', { running: !!ndiSender });
+  }
+}
+
+// grandi is ESM-only ("type": "module"); this file is CommonJS, so it's
+// loaded via dynamic import() rather than require().
+async function getGrandi() {
+  if (!grandiModule) {
+    grandiModule = (await import('grandi')).default;
+  }
+  return grandiModule;
+}
+
+function sendNdiFrame(frame) {
+  if (!ndiSender || !frame) return;
+  ndiSender.video(frame).catch((err) => {
+    console.error('[ndi] video frame send failed:', err && err.message);
+  });
+}
+
+async function startNdiOutput(opts = {}) {
+  const grandi = await getGrandi();
+  if (!grandi.isSupportedCPU()) {
+    return { ok: false, error: 'NDI is not supported on this CPU/platform' };
+  }
+  if (!grandiInitialized) {
+    if (!grandi.initialize()) {
+      return { ok: false, error: 'NDI initialization failed' };
+    }
+    grandiInitialized = true;
+  }
+
+  // Changing name/resolution while already running: tear down and recreate
+  // cleanly rather than trying to resize a live sender in place.
+  if (ndiWindow || ndiSender) {
+    await stopNdiOutput();
+  }
+
+  const width = Math.max(320, Math.round(Number(opts.width) || 1920));
+  const height = Math.max(240, Math.round(Number(opts.height) || 1080));
+  const fps = Math.max(1, Math.min(60, Math.round(Number(opts.fps) || 30)));
+  const name = String(opts.name || '').trim() || 'Message WMB Worship Pro';
+
+  try {
+    ndiSender = await grandi.send({ name, clockVideo: true });
+  } catch (err) {
+    ndiSender = null;
+    return { ok: false, error: err && err.message ? err.message : 'Could not create NDI sender' };
+  }
+
+  ndiWindow = new BrowserWindow({
+    width,
+    height,
+    show: false,
+    // frame:false + useContentSize avoids a native title bar/border eating
+    // into width/height, same as the real projection window (outputWindow)
+    // already does — otherwise the captured frame would end up slightly
+    // smaller than the resolution requested in Settings.
+    frame: false,
+    useContentSize: true,
+    // NDI must carry real per-pixel alpha, not a flat backgroundColor like
+    // outputWindow's '#000000' — Lower Third mode is specifically meant to
+    // be laid over a live camera source in OBS/vMix, so BSP_display.html's
+    // own CSS (transparent everywhere except the lower-third banner itself)
+    // has to reach the NDI frame as actual transparency, the same way OBS's
+    // own Browser Source already renders it today. In Full Screen mode (or
+    // any mode with a configured background) the PAGE's own CSS paints an
+    // opaque color/image/video, so the visible result still matches the
+    // projection window exactly — transparent:true only matters for the
+    // pixels the page itself leaves transparent. A fresh window is always
+    // created here (never reused across starts — see startNdiOutput()'s
+    // teardown-then-recreate above), which avoids a known Electron
+    // regression where a REUSED transparent offscreen window loses
+    // transparency after its first capture.
+    transparent: true,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      offscreen: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      // Same reasoning as outputWindow: this window never has OS focus (it's
+      // never even shown) — without this, Chromium's background-tab/hidden-
+      // page throttling could stall video/animated backgrounds exactly like
+      // it used to for the projection window before that fix was added.
+      backgroundThrottling: false
+    }
+  });
+  // Same display page as the real projection window, loaded the same way
+  // (loadFile -> file:// protocol) — BSP_display.html already auto-connects
+  // to the existing relay (relay-server.js, ws://127.0.0.1:RELAY_PORT) on
+  // its own whenever it sees a file:// URL (see shouldKeepRelayConnected()'s
+  // localFileAuto check in app-src/js/panel/remote-show-tools.js), so this
+  // window receives the exact same live content with no extra sync code here.
+  ndiWindow.loadFile(DISPLAY_HTML);
+  ndiWindow.webContents.setFrameRate(fps);
+
+  // image.getBitmap() returns the whole frame (not just dirtyRect) as a
+  // BGRA buffer, which is exactly grandi's FourCC.BGRA layout — no color
+  // conversion needed. If colors ever come out swapped on a real NDI
+  // receiver, switch fourCC to grandi.FourCC.RGBA below as the fix.
+  ndiPaintHandler = (event, dirtyRect, image) => {
+    const size = image.getSize();
+    if (!size || !size.width || !size.height) return;
+    const frame = {
+      xres: size.width,
+      yres: size.height,
+      frameRateN: fps * 1000,
+      frameRateD: 1000,
+      pictureAspectRatio: size.width / size.height,
+      fourCC: grandi.FourCC.BGRA,
+      frameFormatType: grandi.FrameType.Progressive,
+      lineStrideBytes: size.width * 4,
+      data: image.getBitmap()
+    };
+    ndiLastFrame = frame;
+    sendNdiFrame(frame);
+  };
+  ndiWindow.webContents.on('paint', ndiPaintHandler);
+
+  // Covers both an unexpected close (GPU/renderer crash — the same category
+  // of failure the other windows already guard against with their own
+  // render-process-gone handlers) and the normal stopNdiOutput() path, which
+  // also triggers this event once the window actually finishes closing. By
+  // then stopNdiOutput() has already nulled everything itself, so running it
+  // again here is always a safe, cheap no-op in that case — but it's the
+  // ONLY cleanup that runs for a crash, which otherwise would leave the
+  // heartbeat timer re-sending a last frame that's now permanently frozen,
+  // with the Settings UI still reporting NDI as live.
+  ndiWindow.on('closed', () => {
+    queueNdiOp(() => stopNdiOutput()).then(() => notifyNdiStatusChanged());
+  });
+
+  // Re-sends the last captured frame on a steady beat so an NDI receiver
+  // never sees the source "stall" during a long static (no repaint) screen —
+  // a lyrics slide with no motion can go a long time between real paint
+  // events, which is expected, not a bug.
+  ndiHeartbeatTimer = setInterval(() => {
+    if (ndiLastFrame) sendNdiFrame(ndiLastFrame);
+  }, 2000);
+
+  notifyNdiStatusChanged();
+  return { ok: true };
+}
+
+async function stopNdiOutput() {
+  if (ndiHeartbeatTimer) {
+    clearInterval(ndiHeartbeatTimer);
+    ndiHeartbeatTimer = null;
+  }
+  if (ndiWindow && !ndiWindow.isDestroyed()) {
+    if (ndiPaintHandler) {
+      try { ndiWindow.webContents.removeListener('paint', ndiPaintHandler); } catch (e) { /* non-fatal */ }
+    }
+    try { ndiWindow.removeAllListeners('closed'); } catch (e) { /* non-fatal */ }
+    try { ndiWindow.close(); } catch (e) { /* non-fatal */ }
+  }
+  ndiWindow = null;
+  ndiPaintHandler = null;
+  ndiLastFrame = null;
+  if (ndiSender) {
+    try { ndiSender.destroy(); } catch (e) { /* non-fatal */ }
+  }
+  ndiSender = null;
+  notifyNdiStatusChanged();
+  return { ok: true };
+}
+
+ipcMain.handle('bsp:ndiStart', async (event, opts) => {
+  try {
+    return await queueNdiOp(() => startNdiOutput(opts || {}));
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('bsp:ndiStop', async () => {
+  try {
+    return await queueNdiOp(() => stopNdiOutput());
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
+});
+
+ipcMain.handle('bsp:ndiGetStatus', () => ({ running: !!ndiSender }));
+
 ipcMain.handle('bsp:getDisplays', () => getDisplaysInfo());
+
+ipcMain.handle('bsp:getLocalServerInfo', () => getLocalServerInfo());
 
 ipcMain.handle('bsp:openOutput', (event, params = {}) => {
   try {
@@ -635,6 +894,9 @@ app.whenReady().then(() => {
   createRelayServer(RELAY_PORT, { log: (m) => console.log('[relay]', m) })
     .then((handle) => { relayServerHandle = handle; })
     .catch((err) => console.error('[relay] failed to start on port', RELAY_PORT, err));
+  createStaticServer(HTTP_PORT, APP_SRC_DIR, { log: (m) => console.log('[http]', m) })
+    .then((handle) => { httpServerHandle = handle; })
+    .catch((err) => console.error('[http] failed to start on port', HTTP_PORT, err));
   // Re-detect and reposition whenever the OS display arrangement changes while
   // the projection window is open (projector plugged in/out, switching between
   // Extend/Duplicate mid-service, resolution change, etc.). The screen module
@@ -653,4 +915,15 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+// Destroy the NDI sender before shutting down the NDI library itself — order
+// matters per grandi's own lifecycle guidance ("destroy all finders, senders,
+// receivers... before you call grandi.destroy()").
+app.on('before-quit', () => {
+  queueNdiOp(() => stopNdiOutput()).catch(() => {}).then(() => {
+    if (grandiInitialized && grandiModule) {
+      try { grandiModule.destroy(); } catch (e) { /* non-fatal, app is quitting anyway */ }
+    }
+  });
 });

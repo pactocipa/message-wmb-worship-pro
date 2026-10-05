@@ -170,6 +170,43 @@
     let vmixLastXml = '';
     let vmixResolvedInput = null;
     let vmixLastUpdateAt = 0;
+    // Independent of hostMode/vMix — OBS scene control (js/panel/obs-websocket.js)
+    // via the real obs-websocket plugin, on top of the existing Browser-Source
+    // embedding. Usable whether or not vMix is also enabled.
+    let obsWsState = {
+      enabled: false,
+      host: '127.0.0.1',
+      port: '4455',
+      password: '',
+      liveSceneName: '',
+      clearSceneName: '',
+      autoSwitchOnProject: false,
+      autoSwitchOnClear: false
+    };
+    let obsWsConnectionState = 'disconnected';
+    let obsWsLastError = '';
+    let obsWsSocket = null;
+    let obsWsSceneList = [];
+    let obsWsCurrentScene = '';
+    let obsWsRpcVersion = 1;
+    let obsWsReconnectTimer = null;
+    let obsWsRetryAttempt = 0;
+    let obsWsRequestSeq = 0;
+    let obsWsPendingRequests = new Map();
+    let obsWsHeartbeatTimer = null;
+    // Alternative to the Browser Source/Input display path: streams the
+    // display page as a standard NDI video source (js/panel/ndi-output.js).
+    // Only available inside this desktop shell (NDI runs in the Electron main
+    // process, see window.BSPDesktop.ndiStart() in main.js) — never in a
+    // plain OBS browser dock.
+    let ndiState = {
+      enabled: false,
+      name: 'Message WMB Worship Pro',
+      width: 1920,
+      height: 1080
+    };
+    let ndiRunning = false;
+    let ndiLastError = '';
     let localServerInfo = null;
     let stateReady = false;
     let isRestoringBackup = false;

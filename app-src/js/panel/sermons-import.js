@@ -70,11 +70,24 @@
   // whitespace, so a decimal-looking "1.5" still doesn't match.
   var PARAGRAPH_LINE_RE = /^(\d{1,4})(?:\.\s+(\S.*)|\s+(\S.*)|([A-Za-zÀ-ÖØ-öø-ÿ«“‘'"(].*))$/;
 
+  // Some sermon sources mark paragraphs by wrapping the number in parentheses instead —
+  // "(1) J'aimerais..." or, less often, "(1)J'aimerais..." with no space. The digits must
+  // be the ENTIRE parenthesized group, so a parenthetical aside at the very start of a
+  // continuation line (e.g. "(John 3:16) ...") is never mistaken for a marker — "John"
+  // isn't all digits. Text is required after the closing paren (same reasoning as the
+  // bare-digit form above): "(1)" alone, with nothing following, is too ambiguous to
+  // treat as a confident paragraph start.
+  var PARENTHESIZED_PARAGRAPH_LINE_RE = /^\((\d{1,4})\)\s*(\S.*)$/;
+
   function matchParagraphLine(trimmed) {
     var m = trimmed.match(PARAGRAPH_LINE_RE);
-    if (!m) return null;
-    var text = m[2] != null ? m[2] : (m[3] != null ? m[3] : m[4]);
-    return { num: Number(m[1]), text: text };
+    if (m) {
+      var text = m[2] != null ? m[2] : (m[3] != null ? m[3] : m[4]);
+      return { num: Number(m[1]), text: text };
+    }
+    var p = trimmed.match(PARENTHESIZED_PARAGRAPH_LINE_RE);
+    if (p) return { num: Number(p[1]), text: p[2] };
+    return null;
   }
 
   function findFrontMatter(lines) {
@@ -417,10 +430,15 @@
   root.parseSermonPdfPages = parseSermonPdfPages;
   root.extractPdfPageTexts = extractPdfPageTexts;
   root.parseSermonPdfFile = parseSermonPdfFile;
+  // Shared with render-and-selection.js / songs-and-bible.js / state-and-storage.js so
+  // "what counts as this line's leading paragraph number" can never drift between the
+  // paragraph dropdown, the current-paragraph indicator, and jump-to-paragraph search —
+  // they all call this instead of keeping their own regex.
+  root.matchParagraphLine = matchParagraphLine;
 
   // Allow Node-based testing of the pure text parser without touching pdf.js/DOM.
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { parseSermonPdfPages: parseSermonPdfPages, findFrontMatter: findFrontMatter };
+    module.exports = { parseSermonPdfPages: parseSermonPdfPages, findFrontMatter: findFrontMatter, matchParagraphLine: matchParagraphLine };
   }
 
 })(typeof window !== 'undefined' ? window : this);

@@ -294,8 +294,8 @@
       if (!item) return [];
       const paragraphs = [];
       String(item.content || '').split('\n').forEach((line) => {
-        const m = line.match(/^(\d+)\s+/);
-        if (m) paragraphs.push(m[1]);
+        const m = matchParagraphLine(line.trim());
+        if (m) paragraphs.push(String(m.num));
       });
       return paragraphs;
     }
@@ -1019,23 +1019,53 @@
         div.appendChild(right);
         if (sidebarTab === 'schedule' && buttonContextTab === 'schedule') {
           const scheduleTarget = buildScheduleRestoreTarget(s);
-          div.onclick = () => {
+          // A snippet entry (single Bible verse or sermon paragraph quick-
+          // added via quickAddVerseToSetlist(), _metaKind 'bible_verse')
+          // only carries a one-page pageSnapshot — selecting it the old way
+          // (buttonContextTab='schedule') left Next/Previous as no-ops and
+          // "Go Live" stuck on that isolated snippet. Routing it through
+          // setSidebarTab('bible') instead reuses the exact same restore
+          // pipeline already used when leaving the Setlist tab
+          // (restoreBibleSelectionFromSnapshot(), sidebar-and-workspace.js)
+          // to open the FULL chapter/sermon positioned at this verse/
+          // paragraph — once that's the live item, projectLive()/
+          // pushLiveUpdate()/nextSlide()/prevSlide() already paginate it
+          // normally with no further changes needed, since
+          // isCurrentItemFromScheduleList() now correctly reports false.
+          // Whole-item entries (songs, or full chapters/sermons added via
+          // addToSet(), no _metaKind) already behave this way and keep the
+          // original path unchanged. Falls back to the old snippet-only
+          // behavior if the source chapter/version can no longer be found
+          // (e.g. that Bible version was removed) rather than breaking.
+          const opensFullSource = s._metaKind === 'bible_verse' && scheduleTarget && scheduleTarget.kind === 'bible';
+          // Only redirect into the full Bible/Songs tab when this actually
+          // goes live (double-click, or single-click with "auto go live on
+          // select" enabled) — a plain preview click stays on the Setlist
+          // tab showing the snippet, same as before, so browsing the list
+          // doesn't keep yanking the view away to another tab.
+          const goLiveFromSchedule = () => {
             scheduleReturnTarget = scheduleTarget;
-            buttonContextTab = 'schedule';
-            selectItem(itemIndex);
+            if (opensFullSource) {
+              setSidebarTab('bible');
+            } else {
+              buttonContextTab = 'schedule';
+              selectItem(itemIndex);
+            }
+            projectLive(true);
+          };
+          div.onclick = () => {
             const setlistBehavior = (typeof getSetlistSettingsSnapshot === 'function')
               ? getSetlistSettingsSnapshot()
               : DEFAULT_SETLIST_SETTINGS;
             if (setlistBehavior.autoGoLiveOnSelect) {
-              projectLive(true);
+              goLiveFromSchedule();
+            } else {
+              scheduleReturnTarget = scheduleTarget;
+              buttonContextTab = 'schedule';
+              selectItem(itemIndex);
             }
           };
-          div.ondblclick = () => {
-            scheduleReturnTarget = scheduleTarget;
-            buttonContextTab = 'schedule';
-            selectItem(itemIndex);
-            projectLive(true);
-          };
+          div.ondblclick = goLiveFromSchedule;
         } else {
           div.onclick = () => {
             buttonContextTab = sidebarTab;

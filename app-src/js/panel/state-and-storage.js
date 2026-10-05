@@ -450,9 +450,9 @@
       if (!item || !paragraphNum) return null;
       const lines = String(item.content || '').split('\n');
       for (const line of lines) {
-        const match = line.match(/^(\d+)\s+(.+)/);
-        if (match && match[1] === String(paragraphNum)) {
-          return { verse: match[1], text: match[2] };
+        const match = matchParagraphLine(line.trim());
+        if (match && String(match.num) === String(paragraphNum)) {
+          return { verse: String(match.num), text: match.text };
         }
       }
       return null;
@@ -1016,7 +1016,7 @@
         },
         songs: {
           ...base,
-          ltWidthPct: 60,
+          ltWidthPct: 90,
           ltOffsetX: 0,
           ltOffsetY: 50,
           bgOpacityFull: 100,

@@ -2,12 +2,19 @@
 // built-in 'http'/'crypto' (no npm dependency — avoids network installs in
 // environments where that has been unreliable). It exists purely so the app
 // already expects it can find it: js/panel/BSP_display.html connects to
-// ws://127.0.0.1:5511 whenever it's embedded outside the app's own managed
-// Output window (e.g. added directly as an OBS Browser Source), and
-// js/panel/remote-show-tools.js's broadcastMessage() already publishes every
-// sync message there too (see shouldKeepRelayConnected() — it auto-connects
-// whenever running inside this desktop shell). Without a server listening,
-// that connection just refuses and nothing embedded that way ever syncs.
+// ws://<host>:5511 whenever it's embedded outside the app's own managed
+// Output window (e.g. added directly as an OBS Browser Source, on this PC or
+// on a different one on the same network), and js/panel/remote-show-tools.js's
+// broadcastMessage() already publishes every sync message there too (see
+// shouldKeepRelayConnected() — it auto-connects whenever running inside this
+// desktop shell). Without a server listening, that connection just refuses and
+// nothing embedded that way ever syncs.
+//
+// Listens on all interfaces (not just 127.0.0.1) so a second computer on the
+// LAN — running OBS/vMix with the Browser Source/Input pointed at this PC's
+// IP — can reach it too; same server, same port, whether the other end is
+// this machine or another one on the network. Windows will prompt for a
+// firewall exception the first time this binds; that's expected.
 //
 // Protocol: every message is a JSON envelope; the relay doesn't need to
 // understand it — it just rebroadcasts whatever text one client sends to
@@ -137,8 +144,8 @@ function createRelayServer(port, { log = () => {} } = {}) {
 
   return new Promise((resolve, reject) => {
     httpServer.once('error', reject);
-    httpServer.listen(port, '127.0.0.1', () => {
-      log('relay listening on 127.0.0.1:' + port);
+    httpServer.listen(port, '0.0.0.0', () => {
+      log('relay listening on 0.0.0.0:' + port);
       resolve({
         port,
         close: () => new Promise((res) => {
