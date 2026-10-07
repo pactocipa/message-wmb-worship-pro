@@ -157,11 +157,6 @@
         </select>
         <button id="bible-sermon-grid-btn" type="button" class="btn toolbar-icon-btn" style="display:none;flex:0 0 auto" onclick="openSermonParagraphGrid()" data-i18n-title="sermon_select_paragraph" title="Select a paragraph">#</button>
       </div>
-      <div id="bible-content-search-wrap" style="position:relative">
-        <input type="text" id="bible-content-search" class="nav-input" style="width:100%;box-sizing:border-box" placeholder="Rechercher dans le texte..." oninput="handleBibleContentSearch()" onfocus="handleBibleContentSearch()" onblur="hideBibleContentSearchResults()" autocomplete="off">
-        <div id="bible-content-search-results"></div>
-      </div>
-
       <div id="version-bar"></div>
       <div id="song-list"></div>
     </div>
@@ -246,6 +241,10 @@
           <button class="workspace-font-size-step" type="button" onclick="stepWorkspaceFontSize(-1)" aria-label="Decrease verse font size">-</button>
           <button class="workspace-font-size-value" id="workspace-font-size-value" type="button" onclick="stepWorkspaceFontSize(1)" title="Click to increase verse font size">50pt</button>
           <button class="workspace-font-size-step" type="button" onclick="stepWorkspaceFontSize(1)" aria-label="Increase verse font size">+</button>
+        </div>
+        <div id="bible-content-search-wrap" style="position:relative;flex:1 1 220px;min-width:140px;max-width:460px">
+          <input type="text" id="bible-content-search" class="nav-input" style="width:100%;box-sizing:border-box" placeholder="Rechercher dans le texte..." oninput="handleBibleContentSearch()" onfocus="handleBibleContentSearch()" onblur="hideBibleContentSearchResults()" autocomplete="off">
+          <div id="bible-content-search-results"></div>
         </div>
       </div>
       <div id="preset-popover" class="preset-popover">
