@@ -92,6 +92,7 @@
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + tab));
       updateBottomNavSidebarButtons(tab);
       const bNav = document.getElementById('bible-nav');
+      const contentSearchWrap = document.getElementById('bible-content-search-wrap');
       const vBar = document.getElementById('version-bar');
       const bibleVersionBtn = document.getElementById('footer-bible-version-btn');
       const getLyricsBtn = document.getElementById('main-get-lyrics-btn');
@@ -128,6 +129,7 @@
       const keepLiveDisplay = isLive && livePointer;
       if (tab === 'bible') {
         bNav.style.display = 'flex';
+        if (contentSearchWrap) contentSearchWrap.style.display = 'block';
         vBar.style.display = 'flex';
         if (bibleVersionBtn) bibleVersionBtn.style.display = '';
         if (getLyricsBtn) getLyricsBtn.style.display = 'none';
@@ -140,6 +142,7 @@
         updateBibleLists();
       } else {
         bNav.style.display = 'none';
+        if (contentSearchWrap) contentSearchWrap.style.display = 'none';
         vBar.style.display = 'none';
         if (bibleVersionBtn) bibleVersionBtn.style.display = 'none';
         if (getLyricsBtn) getLyricsBtn.style.display = (tab === 'songs') ? '' : 'none';

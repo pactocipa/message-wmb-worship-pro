@@ -376,6 +376,100 @@
       openModal('sermonParagraphGridModal');
     }
 
+    // In-content search: finds verses/paragraphs within the CURRENTLY OPEN
+    // Bible chapter or sermon (not a cross-book/library search — that's the
+    // separate sidebar search). Reuses the same pages array getPagesFromItem()
+    // already computes for pagination/navigation, so matches are always in
+    // sync with what Next/Previous actually walk through.
+    function buildContentSearchSnippet(raw, rawQuery) {
+      const text = String(raw || '').replace(/^\d{1,4}\s+/, '');
+      const q = String(rawQuery || '').trim();
+      if (!q) return esc(text.slice(0, 140));
+      const pos = text.toLowerCase().indexOf(q.toLowerCase());
+      if (pos === -1) {
+        return esc(text.slice(0, 140)) + (text.length > 140 ? '…' : '');
+      }
+      const start = Math.max(0, pos - 40);
+      const end = Math.min(text.length, pos + q.length + 70);
+      const prefix = start > 0 ? '…' : '';
+      const suffix = end < text.length ? '…' : '';
+      const before = esc(text.slice(start, pos));
+      const match = esc(text.slice(pos, pos + q.length));
+      const after = esc(text.slice(pos + q.length, end));
+      return `${prefix}${before}<mark>${match}</mark>${after}${suffix}`;
+    }
+
+    function hideBibleContentSearchResults() {
+      const box = document.getElementById('bible-content-search-results');
+      if (box) box.style.display = 'none';
+    }
+
+    function jumpToBibleContentSearchResult(pageIdx) {
+      if (!currentItem) return;
+      const pages = getPagesFromItem(currentItem, true);
+      lineCursor = Math.max(0, Math.min(pages.length - 1, pageIdx));
+      updateButtonView();
+      if (isLive && livePointer && livePointer.kind === 'bible') {
+        liveLineCursor = lineCursor;
+        pushLiveUpdate();
+      }
+      hideBibleContentSearchResults();
+      const input = document.getElementById('bible-content-search');
+      if (input) input.blur();
+    }
+
+    function handleBibleContentSearch() {
+      const input = document.getElementById('bible-content-search');
+      const box = document.getElementById('bible-content-search-results');
+      if (!input || !box) return;
+      const rawQuery = input.value.trim();
+      const query = normalizeSearchText(rawQuery);
+      if (!query || query.length < 2 || !currentItem || !getIsBibleItem(currentItem)) {
+        box.style.display = 'none';
+        return;
+      }
+      const pages = getPagesFromItem(currentItem, true);
+      const matches = [];
+      for (let i = 0; i < pages.length; i += 1) {
+        const raw = String(pages[i].raw || '');
+        if (normalizeSearchText(raw).includes(query)) {
+          matches.push({ idx: i, num: pages[i].startVerse || getFirstVerseNumber(raw) || '', raw });
+          if (matches.length >= 60) break;
+        }
+      }
+      box.innerHTML = '';
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'ac-item';
+        empty.style.cursor = 'default';
+        empty.textContent = 'No match in this chapter/sermon';
+        box.appendChild(empty);
+      } else {
+        matches.forEach((m) => {
+          const row = document.createElement('div');
+          row.className = 'ac-item';
+          const num = document.createElement('span');
+          num.className = 'ac-item-num';
+          num.textContent = String(m.num);
+          const text = document.createElement('span');
+          text.className = 'ac-item-text';
+          text.innerHTML = buildContentSearchSnippet(m.raw, rawQuery);
+          row.appendChild(num);
+          row.appendChild(text);
+          // onmousedown (not onclick) fires before the input's blur event,
+          // same pattern already used by #search-autocomplete's own rows —
+          // otherwise the blur-triggered hide would close this dropdown
+          // before the click ever registers.
+          row.onmousedown = (e) => {
+            e.preventDefault();
+            jumpToBibleContentSearchResult(m.idx);
+          };
+          box.appendChild(row);
+        });
+      }
+      box.style.display = 'block';
+    }
+
     function resetBibleDropdowns() {
       const bookSelect = document.getElementById('bible-book-select');
       const chapSelect = document.getElementById('bible-chap-select');

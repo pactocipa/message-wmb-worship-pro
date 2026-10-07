@@ -5777,6 +5777,40 @@
     #search-autocomplete::-webkit-scrollbar { width: 5px; }
     #search-autocomplete::-webkit-scrollbar-thumb { background: var(--text-secondary); border-radius: 3px; }
     #search-autocomplete::-webkit-scrollbar-track { background: transparent; }
+    /* In-content search (current Bible chapter / sermon) — same dropdown
+       look as #search-autocomplete, anchored under its own input instead. */
+    #bible-content-search-results {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      max-height: 220px;
+      overflow-y: auto;
+      background: var(--bg-panel, #1c1f26);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      scrollbar-width: thin;
+      scrollbar-color: var(--text-secondary) transparent;
+    }
+    #bible-content-search-results::-webkit-scrollbar { width: 5px; }
+    #bible-content-search-results::-webkit-scrollbar-thumb { background: var(--text-secondary); border-radius: 3px; }
+    #bible-content-search-results::-webkit-scrollbar-track { background: transparent; }
+    .ac-item-num {
+      flex: 0 0 auto;
+      font-weight: 700;
+      color: var(--accent-light, #60a5fa);
+      min-width: 1.5em;
+      text-align: right;
+    }
+    .ac-item-text mark {
+      background: rgba(255, 213, 0, 0.35);
+      color: inherit;
+      border-radius: 2px;
+    }
     .ac-item {
       display: flex;
       align-items: center;
