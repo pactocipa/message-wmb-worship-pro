@@ -2340,27 +2340,55 @@
       `;
     }
 
-    function handleFocusedSchedulePanelAction(action, idx) {
+    // Resolves a snippet-type setlist entry (single Bible verse or sermon
+    // paragraph, _metaKind 'bible_verse') to its full source chapter/sermon
+    // so Next/Previous (and the live projection) walk the whole thing
+    // instead of staying stuck on the one isolated snippet that was added.
+    // Same fix/reasoning as the classic Setlist list (render-and-selection.js)
+    // — this is the separate Focused Workspace setlist card panel, which had
+    // its own, still-unfixed copy of the old snippet-only logic.
+    // enterTab: true also switches the visible sidebar tab to Bible (double-
+    // click) — false only resolves currentItem/buttonContextTab so live
+    // projection and Next/Previous work correctly while staying visually on
+    // the Setlist tab (the Live button, and auto-go-live-on-select).
+    function resolveFocusedScheduleEntry(entry, index, { enterTab }) {
+      const scheduleTarget = buildScheduleRestoreTarget(entry);
+      const opensFullSource = entry._metaKind === 'bible_verse' && scheduleTarget && scheduleTarget.kind === 'bible';
+      scheduleReturnTarget = scheduleTarget;
+      if (!opensFullSource) {
+        buttonContextTab = 'schedule';
+        selectItem(index);
+        return;
+      }
+      if (enterTab) {
+        setSidebarTab('bible');
+        return;
+      }
+      buttonContextTab = 'bible';
+      restoreBibleSelectionFromSnapshot(scheduleTarget);
+    }
+
+    function handleFocusedSchedulePanelAction(action, idx, opts = {}) {
       const index = Number(idx);
       if (!Number.isFinite(index) || index < 0 || index >= schedule.length) return;
       const entry = schedule[index];
       if (!entry) return;
       if (action === 'select') {
-        scheduleReturnTarget = buildScheduleRestoreTarget(entry);
-        buttonContextTab = 'schedule';
-        selectItem(index);
         const setlistBehavior = (typeof getSetlistSettingsSnapshot === 'function')
           ? getSetlistSettingsSnapshot()
           : DEFAULT_SETLIST_SETTINGS;
         if (setlistBehavior.autoGoLiveOnSelect) {
+          resolveFocusedScheduleEntry(entry, index, { enterTab: !!opts.enterTab });
           projectLive(true);
+        } else {
+          scheduleReturnTarget = buildScheduleRestoreTarget(entry);
+          buttonContextTab = 'schedule';
+          selectItem(index);
         }
         return;
       }
       if (action === 'live') {
-        scheduleReturnTarget = buildScheduleRestoreTarget(entry);
-        buttonContextTab = 'schedule';
-        selectItem(index);
+        resolveFocusedScheduleEntry(entry, index, { enterTab: !!opts.enterTab });
         projectLive(true);
         return;
       }
@@ -2548,7 +2576,7 @@
         const actionBtn = event.target.closest('[data-focused-action]');
         if (actionBtn) {
           event.stopPropagation();
-          handleFocusedSchedulePanelAction(actionBtn.dataset.focusedAction, actionBtn.dataset.focusedScheduleIndex);
+          handleFocusedSchedulePanelAction(actionBtn.dataset.focusedAction, actionBtn.dataset.focusedScheduleIndex, { enterTab: false });
           return;
         }
         const row = event.target.closest('[data-focused-schedule-index]');
@@ -2559,7 +2587,7 @@
       panel.addEventListener('dblclick', (event) => {
         const row = event.target.closest('[data-focused-schedule-index]');
         if (!row) return;
-        handleFocusedSchedulePanelAction('live', row.dataset.focusedScheduleIndex);
+        handleFocusedSchedulePanelAction('live', row.dataset.focusedScheduleIndex, { enterTab: true });
       });
     }
 
