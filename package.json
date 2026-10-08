@@ -1,6 +1,6 @@
 {
   "name": "bsp-desktop",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "Desktop shell (Electron) for Message WMB Worship Pro — projection window management, with NDI output planned as a later phase.",
   "author": "Multimédia Jésus Le Roc Tabernacle de Kananga",
   "main": "main.js",

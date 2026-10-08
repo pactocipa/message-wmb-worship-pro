@@ -473,13 +473,21 @@
           box.appendChild(row);
         });
       }
-      // Positioned via fixed + getBoundingClientRect() instead of relying on
-      // CSS position:absolute/top:100% — this input now lives inside
-      // .header-toolbar (moved there per the user's request), and the
-      // absolute-positioned dropdown was rendering far from the input
-      // ("en bas", not visible) there, most likely due to some ancestor's
-      // stacking/containing-block context in that toolbar. Computing the
-      // exact viewport position here sidesteps that entirely.
+      // Root cause of both the earlier mispositioning AND it going fully
+      // invisible after switching to position:fixed: .header-toolbar (this
+      // input's actual ancestor now) has backdrop-filter:blur(...) for its
+      // glass effect — per the CSS spec, filter/backdrop-filter on an
+      // ancestor creates a NEW containing block for fixed/absolute
+      // descendants (the same effect `transform` has), so position:fixed
+      // here was never really escaping to the viewport; it stayed trapped
+      // inside the (blurred, clipped) toolbar with its coordinates
+      // reinterpreted relative to that toolbar instead. Re-parenting the
+      // box to <body> (plain "portal" pattern) sidesteps that trap for
+      // good — body has no transform/filter, so position:fixed on a true
+      // body child is always viewport-relative as intended.
+      if (box.parentElement !== document.body) {
+        document.body.appendChild(box);
+      }
       const inputRect = input.getBoundingClientRect();
       box.style.position = 'fixed';
       box.style.left = `${Math.round(inputRect.left)}px`;
