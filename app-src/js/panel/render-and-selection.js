@@ -415,6 +415,15 @@
       const verseNum = getFirstVerseNumber(pages[lineCursor]?.raw);
       if (verseNum) setBibleGroupAnchor(verseNum, currentItem);
       updateButtonView();
+      // updateButtonView()'s own auto-scroll only fires when the active
+      // button isn't already judged "in view" (isButtonInView()) — force an
+      // explicit, unconditional scroll-to-match here instead, so clicking a
+      // search result always jumps straight to it immediately, the same way
+      // picking a paragraph number from the "#" grid does, rather than only
+      // appearing to work once something else (e.g. Go Live) happens to
+      // re-render afterward.
+      const matchedBtn = document.querySelector('#lyric-buttons .lyric-btn.active');
+      if (matchedBtn) matchedBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
       if (isLive && livePointer && livePointer.kind === 'bible') {
         liveLineCursor = lineCursor;
         pushLiveUpdate();
