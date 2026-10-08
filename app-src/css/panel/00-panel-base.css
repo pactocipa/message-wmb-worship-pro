@@ -5781,17 +5781,17 @@
        look as #search-autocomplete, anchored under its own input instead. */
     #bible-content-search-results {
       display: none;
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 100%;
+      /* position/left/top/width are set from JS (handleBibleContentSearch(),
+         render-and-selection.js) via getBoundingClientRect() each time this
+         is shown — fixed positioning computed in JS, not CSS top:100%, since
+         this input lives inside .header-toolbar where an absolute/top:100%
+         dropdown was rendering far from the input instead of right under it. */
       max-height: 220px;
       overflow-y: auto;
       background: var(--bg-panel, #1c1f26);
       border: 1px solid var(--border);
-      border-top: none;
       border-radius: 0 0 6px 6px;
-      z-index: 100;
+      z-index: 9999;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       scrollbar-width: thin;
       scrollbar-color: var(--text-secondary) transparent;

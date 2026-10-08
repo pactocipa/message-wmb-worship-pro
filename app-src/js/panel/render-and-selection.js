@@ -408,6 +408,12 @@
       if (!currentItem) return;
       const pages = getPagesFromItem(currentItem, true);
       lineCursor = Math.max(0, Math.min(pages.length - 1, pageIdx));
+      // Same anchor bookkeeping jumpToSermonParagraph()/the paragraph grid
+      // already does, so this jump behaves identically to picking a verse/
+      // paragraph number there (e.g. stays correct across re-renders that
+      // re-derive the current position from this anchor).
+      const verseNum = getFirstVerseNumber(pages[lineCursor]?.raw);
+      if (verseNum) setBibleGroupAnchor(verseNum, currentItem);
       updateButtonView();
       if (isLive && livePointer && livePointer.kind === 'bible') {
         liveLineCursor = lineCursor;
@@ -467,6 +473,19 @@
           box.appendChild(row);
         });
       }
+      // Positioned via fixed + getBoundingClientRect() instead of relying on
+      // CSS position:absolute/top:100% — this input now lives inside
+      // .header-toolbar (moved there per the user's request), and the
+      // absolute-positioned dropdown was rendering far from the input
+      // ("en bas", not visible) there, most likely due to some ancestor's
+      // stacking/containing-block context in that toolbar. Computing the
+      // exact viewport position here sidesteps that entirely.
+      const inputRect = input.getBoundingClientRect();
+      box.style.position = 'fixed';
+      box.style.left = `${Math.round(inputRect.left)}px`;
+      box.style.top = `${Math.round(inputRect.bottom)}px`;
+      box.style.width = `${Math.round(inputRect.width)}px`;
+      box.style.right = 'auto';
       box.style.display = 'block';
     }
 
